@@ -5,7 +5,11 @@
 <title>Wiki System</title>
 
 <style>
-body { font-family: Arial; background:#0b0f1a; color:white; }
+body {
+  font-family: Arial;
+  background:#0b0f1a;
+  color:white;
+}
 
 input, textarea {
   width:100%;
@@ -16,17 +20,55 @@ input, textarea {
 button {
   padding:10px;
   margin:5px;
+  cursor:pointer;
+}
+
+/* ================= LOADING OVERLAY ================= */
+#loading {
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.8);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  z-index:9999;
+  color:white;
+}
+
+.spinner {
+  width:50px;
+  height:50px;
+  border:5px solid #333;
+  border-top:5px solid #4c7dff;
+  border-radius:50%;
+  animation: spin 1s linear infinite;
+  margin-bottom:10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 #pages div {
-  cursor:pointer;
-  padding:5px;
+  padding:6px;
   border-bottom:1px solid #333;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
+
+<!-- LOADING OVERLAY -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loadingText">Loading...</div>
+</div>
 
 <div id="loginBox">
   <h2>Login</h2>
@@ -51,34 +93,59 @@ button {
   <textarea id="editor"></textarea>
 
   <button onclick="save()">Save</button>
+
 </div>
 
 <script>
+
 const API = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR9VRaaCyfL1FekDG9npiHBXurFzY8kgfFufzMq69yVg/exec";
 
 let user = null;
 let current = null;
 
+/* ================= LOADING SYSTEM ================= */
+function showLoading(text="Loading...") {
+  document.getElementById("loadingText").innerText = text;
+  document.getElementById("loading").style.display = "flex";
+}
+
+function hideLoading() {
+  document.getElementById("loading").style.display = "none";
+}
+
+/* ================= SAFE FETCH WRAPPER ================= */
+async function api(url, loadingText="Loading...") {
+  showLoading(loadingText);
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    hideLoading();
+    return data;
+  } catch (err) {
+    hideLoading();
+    alert("Network error");
+    throw err;
+  }
+}
+
 /* ================= LOGIN ================= */
-async function login(){
-  const res = await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"login",
-      email:email.value,
-      password:password.value
-    })
-  });
+async function login() {
 
-  const data = await res.json();
+  const url =
+    API +
+    "?action=login" +
+    "&email=" + encodeURIComponent(email.value) +
+    "&password=" + encodeURIComponent(password.value);
 
-  if(data.success){
+  const data = await api(url, "Logging in...");
+
+  if (data.success) {
     user = data;
     localStorage.setItem("user", JSON.stringify(user));
 
-    loginBox.style.display="none";
-    wiki.style.display="block";
+    loginBox.style.display = "none";
+    wiki.style.display = "block";
 
     loadPages();
   } else {
@@ -87,77 +154,85 @@ async function login(){
 }
 
 /* ================= SIGNUP ================= */
-async function signup(){
-  const res = await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"signup",
-      username:"user",
-      email:email.value,
-      password:password.value
-    })
-  });
+async function signup() {
 
-  alert(await res.text());
+  const url =
+    API +
+    "?action=signup" +
+    "&username=user" +
+    "&email=" + encodeURIComponent(email.value) +
+    "&password=" + encodeURIComponent(password.value);
+
+  const data = await api(url, "Creating account...");
+
+  alert(JSON.stringify(data));
 }
 
-/* ================= LIST ================= */
-async function loadPages(){
-  const res = await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({action:"listPages"})
-  });
+/* ================= LOAD PAGES ================= */
+async function loadPages() {
 
-  const data = await res.json();
+  const url = API + "?action=listPages";
 
-  pages.innerHTML="";
+  const data = await api(url, "Loading pages...");
 
-  data.pages.forEach(p=>{
-    const div=document.createElement("div");
-    div.innerText=p.title;
-    div.onclick=()=>openPage(p.id);
+  pages.innerHTML = "";
+
+  data.pages.forEach(p => {
+    const div = document.createElement("div");
+    div.innerText = p.title;
+
+    div.onclick = () => openPage(p.id);
+
     pages.appendChild(div);
   });
 }
 
-/* ================= OPEN ================= */
-async function openPage(id){
+/* ================= OPEN PAGE ================= */
+async function openPage(id) {
+
   current = id;
 
-  const res = await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({action:"getPage",id})
-  });
+  const url = API + "?action=getPage&id=" + id;
 
-  const data = await res.json();
+  const data = await api(url, "Opening page...");
 
   title.innerText = data.page.title;
   editor.value = data.page.content;
 }
 
 /* ================= SAVE ================= */
-async function save(){
-  await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"updatePage",
-      id:current,
-      content:editor.value,
-      editor:user.email
-    })
-  });
+async function save() {
 
-  alert("Saved");
+  const url =
+    API +
+    "?action=updatePage" +
+    "&id=" + current +
+    "&content=" + encodeURIComponent(editor.value) +
+    "&editor=" + encodeURIComponent(user.email);
+
+  await api(url, "Saving page...");
+
+  alert("Saved!");
 }
 
-function logout(){
+/* ================= AUTO LOGIN ================= */
+window.onload = () => {
+  const saved = localStorage.getItem("user");
+  if (saved) {
+    user = JSON.parse(saved);
+
+    loginBox.style.display = "none";
+    wiki.style.display = "block";
+
+    loadPages();
+  }
+};
+
+function logout() {
   localStorage.removeItem("user");
   location.reload();
 }
+
 </script>
 
 </body>
