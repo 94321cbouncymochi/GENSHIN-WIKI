@@ -70,41 +70,16 @@ function log(msg){
 }
 
 /* ================= LOGIN ================= */
-async function login(){
-  log("login clicked...");
+async function login() {
+  log("testing fetch...");
 
-  const res = await fetch(API,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      action:"login",
-      email:email.value,
-      password:password.value
-    })
-  });
-
-  log("response received...");
-
-  const data = await res.json();
-
-  log(JSON.stringify(data));
-
-  if(data.success){
-    user=data;
-    localStorage.setItem("user",JSON.stringify(user));
-
-    loginBox.style.display="none";
-    wiki.style.display="block";
-
-    loadPages();
-
-    log("LOGIN SUCCESS");
-  } else {
-    log("LOGIN FAILED: "+data.message);
-    alert("Login failed");
+  try {
+    const res = await fetch(API);
+    log("fetch succeeded: " + res.status);
+  } catch (e) {
+    log("FETCH BLOCKED: " + e);
   }
 }
-
 /* ================= SIGNUP ================= */
 async function signup(){
   const res = await fetch(API,{
