@@ -1,48 +1,146 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Wiki Login</title>
+<meta charset="UTF-8">
+<title>Wiki Portal</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #1a1f3c, #0b0f1f);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .container {
+    width: 420px;
+    padding: 25px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    transition: transform 0.3s ease;
+  }
+
+  .container:hover {
+    transform: scale(1.02);
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+  }
+
+  input:focus {
+    box-shadow: 0 0 10px #6aa8ff;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    background: linear-gradient(90deg, #6aa8ff, #9b7bff);
+    color: white;
+    transition: 0.2s;
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(150,120,255,0.5);
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  .divider {
+    margin: 15px 0;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .logged-in {
+    display: none;
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(100,200,255,0.15);
+    border: 1px solid rgba(100,200,255,0.4);
+    border-radius: 20px;
+    margin-top: 10px;
+  }
+</style>
 </head>
+
 <body>
 
-<h2>Signup</h2>
-<input id="su_user" placeholder="Username">
-<input id="su_email" placeholder="Email">
-<input id="su_pass" type="password" placeholder="Password">
-<button onclick="signup()">Signup</button>
+<div class="container" id="authBox">
 
-<hr>
+  <h2>🌌 Wiki Portal</h2>
 
-<h2>Login</h2>
-<input id="li_email" placeholder="Email">
-<input id="li_pass" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
+  <div id="loginBox">
+    <input id="li_email" placeholder="Email">
+    <input id="li_pass" type="password" placeholder="Password">
+    <button onclick="login()">Enter Wiki</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="signupBox">
+    <input id="su_user" placeholder="Username">
+    <input id="su_email" placeholder="Email">
+    <input id="su_pass" type="password" placeholder="Password">
+    <button onclick="signup()">Create Account</button>
+  </div>
+
+</div>
+
+<div class="container logged-in" id="dashboard">
+  <h2>✨ Welcome, <span id="userName"></span></h2>
+  <div class="badge" id="roleBadge"></div>
+
+  <p style="margin-top:15px; opacity:0.7;">
+    You are now inside the wiki system.
+  </p>
+
+  <button onclick="logout()">Logout</button>
+</div>
 
 <script>
-const API_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+const API_URL = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR9VRaaCyfL1FekDG9npiHBXurFzY8kgfFufzMq69yVg/exec";
 
-async function signup() {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "signup",
-      username: document.getElementById("su_user").value,
-      email: document.getElementById("su_email").value,
-      password: document.getElementById("su_pass").value
-    })
-  });
-
-  const data = await res.json();
-  alert(data.message);
-}
-
+/* ---------------- LOGIN ---------------- */
 async function login() {
   const res = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "login",
-      email: document.getElementById("li_email").value,
-      password: document.getElementById("li_pass").value
+      email: li_email.value,
+      password: li_pass.value
     })
   });
 
@@ -50,11 +148,50 @@ async function login() {
 
   if (data.success) {
     localStorage.setItem("user", JSON.stringify(data));
-    alert("Logged in as " + data.username);
+    showDashboard(data);
   } else {
     alert(data.message);
   }
 }
+
+/* ---------------- SIGNUP ---------------- */
+async function signup() {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "signup",
+      username: su_user.value,
+      email: su_email.value,
+      password: su_pass.value
+    })
+  });
+
+  const data = await res.json();
+  alert(data.message);
+}
+
+/* ---------------- UI SWITCH ---------------- */
+function showDashboard(user) {
+  document.getElementById("authBox").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+
+  document.getElementById("userName").innerText = user.username;
+  document.getElementById("roleBadge").innerText = "Role: " + user.role;
+}
+
+/* ---------------- LOGOUT ---------------- */
+function logout() {
+  localStorage.removeItem("user");
+  location.reload();
+}
+
+/* ---------------- AUTO LOGIN ---------------- */
+window.onload = () => {
+  const user = localStorage.getItem("user");
+  if (user) {
+    showDashboard(JSON.parse(user));
+  }
+};
 </script>
 
 </body>
