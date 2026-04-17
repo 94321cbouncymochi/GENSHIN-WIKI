@@ -2,48 +2,161 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Wiki System</title>
+  <title>Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div id="loginBox" class="card">
+<div id="loginBox">
   <h2>Login</h2>
 
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
+  <input id="email" placeholder="email">
+  <input id="password" type="password" placeholder="password">
 
   <button onclick="login()">Login</button>
   <button onclick="signup()">Signup</button>
 </div>
 
-<div id="wiki" class="hidden">
+<div id="wiki" style="display:none">
 
-  <div class="topbar">
-    <h2>Wiki</h2>
-    <button onclick="loadPages()">Refresh</button>
-    <button onclick="logout()">Logout</button>
-  </div>
+  <h2>Wiki</h2>
 
-  <div class="layout">
+  <button onclick="loadPages()">Load Pages</button>
+  <button onclick="logout()">Logout</button>
 
-    <div id="pages" class="sidebar"></div>
+  <div id="pages"></div>
 
-    <div class="content">
-      <h2 id="title"></h2>
+  <h3 id="title"></h3>
+  <textarea id="editor"></textarea>
 
-      <textarea id="editor" class="editor"></textarea>
-
-      <div class="buttons">
-        <button onclick="savePage()">Save</button>
-        <button id="deleteBtn" onclick="deletePage()">Delete</button>
-      </div>
-    </div>
-
-  </div>
+  <button onclick="save()">Save</button>
 </div>
 
-<script src="app.js"></script>
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR9VRaaCyfL1FekDG9npiHBXurFzY8kgfFufzMq69yVg/exec";
+
+let user = null;
+let currentPage = null;
+
+/* ================= LOGIN ================= */
+async function login() {
+  const res = await fetch(API, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      action:"login",
+      email: email.value,
+      password: password.value
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    user = data;
+    localStorage.setItem("user", JSON.stringify(user));
+
+    loginBox.style.display = "none";
+    wiki.style.display = "block";
+
+    loadPages();
+  } else {
+    alert("Login failed");
+  }
+}
+
+/* ================= SIGNUP ================= */
+async function signup() {
+  const res = await fetch(API, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      action:"signup",
+      username:"user",
+      email: email.value,
+      password: password.value
+    })
+  });
+
+  alert(await res.text());
+}
+
+/* ================= LOAD PAGES ================= */
+async function loadPages() {
+  const res = await fetch(API, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({action:"listPages"})
+  });
+
+  const data = await res.json();
+
+  pages.innerHTML = "";
+
+  data.pages.forEach(p => {
+    const div = document.createElement("div");
+    div.innerText = p.title;
+
+    div.onclick = () => openPage(p.id);
+
+    pages.appendChild(div);
+  });
+}
+
+/* ================= OPEN PAGE ================= */
+async function openPage(id) {
+  currentPage = id;
+
+  const res = await fetch(API, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      action:"getPage",
+      id
+    })
+  });
+
+  const data = await res.json();
+
+  title.innerText = data.page.title;
+  editor.value = data.page.content;
+}
+
+/* ================= SAVE ================= */
+async function save() {
+  await fetch(API, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      action:"updatePage",
+      id: currentPage,
+      content: editor.value,
+      editor: user.email
+    })
+  });
+
+  alert("Saved");
+}
+
+/* ================= AUTO LOGIN ================= */
+window.onload = () => {
+  const saved = localStorage.getItem("user");
+  if (saved) {
+    user = JSON.parse(saved);
+
+    loginBox.style.display = "none";
+    wiki.style.display = "block";
+
+    loadPages();
+  }
+};
+
+function logout() {
+  localStorage.removeItem("user");
+  location.reload();
+}
+</script>
+
 </body>
 </html>
