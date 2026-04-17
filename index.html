@@ -1,25 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Wiki</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Wiki</title>
+
+<style>
+body { font-family: Arial; background:#0b0f1a; color:white; }
+
+#loginBox, #wiki { padding:20px; }
+
+input, textarea {
+  width:100%;
+  margin:5px 0;
+  padding:10px;
+}
+
+button {
+  margin:5px;
+  padding:10px;
+}
+
+#debug {
+  position:fixed;
+  bottom:10px;
+  left:10px;
+  background:black;
+  color:lime;
+  padding:10px;
+  font-size:12px;
+  max-width:90%;
+}
+</style>
 </head>
 
 <body>
 
+<div id="debug">DEBUG: waiting...</div>
+
 <div id="loginBox">
   <h2>Login</h2>
-
   <input id="email" placeholder="email">
   <input id="password" type="password" placeholder="password">
-
   <button onclick="login()">Login</button>
   <button onclick="signup()">Signup</button>
 </div>
 
 <div id="wiki" style="display:none">
-
   <h2>Wiki</h2>
 
   <button onclick="loadPages()">Load Pages</button>
@@ -36,126 +62,118 @@
 <script>
 const API = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR9VRaaCyfL1FekDG9npiHBXurFzY8kgfFufzMq69yVg/exec";
 
-let user = null;
-let currentPage = null;
+let user=null;
+let current=null;
+
+function log(msg){
+  document.getElementById("debug").innerText = msg;
+}
 
 /* ================= LOGIN ================= */
-async function login() {
-  const emailVal = document.getElementById("email").value;
-  const passVal = document.getElementById("password").value;
+async function login(){
+  log("login clicked...");
 
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "login",
-      email: emailVal,
-      password: passVal
+  const res = await fetch(API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      action:"login",
+      email:email.value,
+      password:password.value
     })
   });
 
+  log("response received...");
+
   const data = await res.json();
-  console.log("LOGIN RESPONSE:", data);
 
-  if (data.success) {
-    user = data;
-    localStorage.setItem("user", JSON.stringify(user));
+  log(JSON.stringify(data));
 
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("wiki").style.display = "block";
+  if(data.success){
+    user=data;
+    localStorage.setItem("user",JSON.stringify(user));
+
+    loginBox.style.display="none";
+    wiki.style.display="block";
 
     loadPages();
+
+    log("LOGIN SUCCESS");
   } else {
-    alert(data.message || "Login failed");
+    log("LOGIN FAILED: "+data.message);
+    alert("Login failed");
   }
 }
+
 /* ================= SIGNUP ================= */
-async function signup() {
-  const res = await fetch(API, {
+async function signup(){
+  const res = await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
+    body:JSON.stringify({
       action:"signup",
       username:"user",
-      email: email.value,
-      password: password.value
+      email:email.value,
+      password:password.value
     })
   });
 
-  alert(await res.text());
+  log(await res.text());
 }
 
-/* ================= LOAD PAGES ================= */
-async function loadPages() {
-  const res = await fetch(API, {
+/* ================= LOAD ================= */
+async function loadPages(){
+  const res = await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({action:"listPages"})
+    body:JSON.stringify({action:"listPages"})
   });
 
   const data = await res.json();
 
-  pages.innerHTML = "";
+  pages.innerHTML="";
 
-  data.pages.forEach(p => {
-    const div = document.createElement("div");
-    div.innerText = p.title;
-
-    div.onclick = () => openPage(p.id);
-
+  data.pages.forEach(p=>{
+    const div=document.createElement("div");
+    div.innerText=p.title;
+    div.onclick=()=>open(p.id,p.title);
     pages.appendChild(div);
   });
 }
 
-/* ================= OPEN PAGE ================= */
-async function openPage(id) {
-  currentPage = id;
+/* ================= OPEN ================= */
+async function open(id,title){
+  current=id;
 
-  const res = await fetch(API, {
+  const res=await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
-      action:"getPage",
-      id
-    })
+    body:JSON.stringify({action:"getPage",id})
   });
 
-  const data = await res.json();
+  const data=await res.json();
 
-  title.innerText = data.page.title;
-  editor.value = data.page.content;
+  titleEl.innerText=data.page.title;
+  editor.value=data.page.content;
 }
 
 /* ================= SAVE ================= */
-async function save() {
-  await fetch(API, {
+async function save(){
+  await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
+    body:JSON.stringify({
       action:"updatePage",
-      id: currentPage,
-      content: editor.value,
-      editor: user.email
+      id:current,
+      content:editor.value,
+      editor:user.email
     })
   });
 
-  alert("Saved");
+  log("saved");
 }
 
-/* ================= AUTO LOGIN ================= */
-window.onload = () => {
-  const saved = localStorage.getItem("user");
-  if (saved) {
-    user = JSON.parse(saved);
-
-    loginBox.style.display = "none";
-    wiki.style.display = "block";
-
-    loadPages();
-  }
-};
-
-function logout() {
+function logout(){
   localStorage.removeItem("user");
   location.reload();
 }
