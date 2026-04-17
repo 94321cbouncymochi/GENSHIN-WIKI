@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Static Wiki Engine (RAW Mode)</title>
+<title>Static Wiki Engine</title>
 
 <style>
 body {
@@ -61,19 +61,6 @@ audio {
   width:100%;
   margin:10px 0;
 }
-
-.debug-box {
-  border:1px solid #444;
-  padding:8px;
-  margin:10px 0;
-  background:#0f172a;
-}
-
-.debug-url {
-  font-size:12px;
-  color:#aaa;
-  word-break:break-all;
-}
 </style>
 </head>
 
@@ -112,7 +99,7 @@ async function loadPages() {
   renderList();
 }
 
-/* ================= LIST ================= */
+/* ================= SIDEBAR ================= */
 function renderList() {
   const q = search.value.toLowerCase();
   list.innerHTML = "";
@@ -154,18 +141,15 @@ async function loadPage(name) {
   }
 }
 
-/* ================= CLEAN ================= */
+/* ================= CLEANER ================= */
 function clean(str) {
-  return str
-    .replace(/\r/g, "")
-    .replace(/\n/g, "")
-    .trim();
+  return str.replace(/\r/g, "").replace(/\n/g, "").trim();
 }
 
-/* ================= ASSETS (RAW ONLY) ================= */
+/* ================= ASSET PARSER (RAW MODE) ================= */
 function parseAssets(folder, text) {
 
-  // IMAGE → RAW ONLY
+  // 🖼️ IMAGES (RAW ONLY)
   text = text.replace(/image::(.*)/g, (m, src) => {
 
     const file = clean(src);
@@ -174,18 +158,10 @@ function parseAssets(folder, text) {
       ? file
       : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
 
-    return `
-      <div class="debug-box">
-        <div class="debug-url">RAW IMAGE URL:</div>
-        <div class="debug-url">${url}</div>
-
-        <img src="${url}"
-          onerror="this.style.border='3px solid red'; this.alt='FAILED IMAGE'">
-      </div>
-    `;
+    return `<img src="${url}" onerror="this.style.border='3px solid red';">`;
   });
 
-  // MP3 → RAW ONLY
+  // 🎵 MP3 (RAW ONLY)
   text = text.replace(/mp3::(.*)/g, (m, src) => {
 
     const file = clean(src);
@@ -204,7 +180,7 @@ function parseAssets(folder, text) {
   return text;
 }
 
-/* ================= MARKDOWN ================= */
+/* ================= MINI MARKDOWN ================= */
 function markdown(text) {
   return text
     .replace(/^### (.*)$/gim, "<h3>$1</h3>")
