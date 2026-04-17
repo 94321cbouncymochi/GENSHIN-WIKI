@@ -41,31 +41,34 @@ let currentPage = null;
 
 /* ================= LOGIN ================= */
 async function login() {
+  const emailVal = document.getElementById("email").value;
+  const passVal = document.getElementById("password").value;
+
   const res = await fetch(API, {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      action:"login",
-      email: email.value,
-      password: password.value
+      action: "login",
+      email: emailVal,
+      password: passVal
     })
   });
 
   const data = await res.json();
+  console.log("LOGIN RESPONSE:", data);
 
   if (data.success) {
     user = data;
     localStorage.setItem("user", JSON.stringify(user));
 
-    loginBox.style.display = "none";
-    wiki.style.display = "block";
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("wiki").style.display = "block";
 
     loadPages();
   } else {
-    alert("Login failed");
+    alert(data.message || "Login failed");
   }
 }
-
 /* ================= SIGNUP ================= */
 async function signup() {
   const res = await fetch(API, {
