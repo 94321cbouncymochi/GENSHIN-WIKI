@@ -84,6 +84,7 @@ audio {
 
 /* ================= SOURCE OF TRUTH ================= */
 let pages = [];
+const BASE_URL = "https://coolpython53.github.io/GENSHIN-WIKI/";
 
 /* ================= LOAD MANIFEST ================= */
 async function loadPages() {
@@ -130,14 +131,19 @@ async function loadPage(name) {
 /* ================= ASSETS ================= */
 function parseAssets(folder, text) {
 
+  // IMAGES
   text = text.replace(/image::(.*)/g, (m, src) => {
-    return `<img src="pages/${folder}/${src.trim()}">`;
+    const url = BASE_URL + `pages/${folder}/${src.trim()}`;
+    return `<img src="${url}">`;
   });
 
+  // AUDIO (MP3)
   text = text.replace(/mp3::(.*)/g, (m, src) => {
+    const url = BASE_URL + `pages/${folder}/${src.trim()}`;
+
     return `
       <audio controls>
-        <source src="pages/${folder}/${src.trim()}" type="audio/mpeg">
+        <source src="${url}" type="audio/mpeg">
       </audio>
     `;
   });
