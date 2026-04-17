@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wiki Login</title>
+</head>
+<body>
+
+<h2>Signup</h2>
+<input id="su_user" placeholder="Username">
+<input id="su_email" placeholder="Email">
+<input id="su_pass" type="password" placeholder="Password">
+<button onclick="signup()">Signup</button>
+
+<hr>
+
+<h2>Login</h2>
+<input id="li_email" placeholder="Email">
+<input id="li_pass" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+
+<script>
+const API_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+
+async function signup() {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "signup",
+      username: document.getElementById("su_user").value,
+      email: document.getElementById("su_email").value,
+      password: document.getElementById("su_pass").value
+    })
+  });
+
+  const data = await res.json();
+  alert(data.message);
+}
+
+async function login() {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "login",
+      email: document.getElementById("li_email").value,
+      password: document.getElementById("li_pass").value
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    localStorage.setItem("user", JSON.stringify(data));
+    alert("Logged in as " + data.username);
+  } else {
+    alert(data.message);
+  }
+}
+</script>
+
+</body>
+</html>
