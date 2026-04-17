@@ -18,22 +18,15 @@ button {
   margin:5px;
 }
 
-#debug {
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  background:black;
-  color:lime;
-  padding:10px;
-  font-size:12px;
-  max-width:90%;
+#pages div {
+  cursor:pointer;
+  padding:5px;
+  border-bottom:1px solid #333;
 }
 </style>
 </head>
 
 <body>
-
-<div id="debug">DEBUG: ready</div>
 
 <div id="loginBox">
   <h2>Login</h2>
@@ -46,9 +39,11 @@ button {
 </div>
 
 <div id="wiki" style="display:none">
+
   <h2>Wiki</h2>
 
   <button onclick="loadPages()">Load Pages</button>
+  <button onclick="logout()">Logout</button>
 
   <div id="pages"></div>
 
@@ -64,15 +59,9 @@ const API = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR
 let user = null;
 let current = null;
 
-function log(msg){
-  document.getElementById("debug").innerText = msg;
-}
-
 /* ================= LOGIN ================= */
 async function login(){
-  log("logging in...");
-
-  const res = await fetch(API, {
+  const res = await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
@@ -83,7 +72,6 @@ async function login(){
   });
 
   const data = await res.json();
-  log(JSON.stringify(data));
 
   if(data.success){
     user = data;
@@ -93,16 +81,14 @@ async function login(){
     wiki.style.display="block";
 
     loadPages();
-
-    log("LOGIN SUCCESS");
   } else {
-    log("LOGIN FAILED: " + data.message);
+    alert("Login failed");
   }
 }
 
 /* ================= SIGNUP ================= */
 async function signup(){
-  const res = await fetch(API, {
+  const res = await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
@@ -113,10 +99,10 @@ async function signup(){
     })
   });
 
-  log(await res.text());
+  alert(await res.text());
 }
 
-/* ================= LOAD ================= */
+/* ================= LIST ================= */
 async function loadPages(){
   const res = await fetch(API,{
     method:"POST",
@@ -131,25 +117,25 @@ async function loadPages(){
   data.pages.forEach(p=>{
     const div=document.createElement("div");
     div.innerText=p.title;
-    div.onclick=()=>openPage(p.id,p.title);
+    div.onclick=()=>openPage(p.id);
     pages.appendChild(div);
   });
 }
 
 /* ================= OPEN ================= */
-async function openPage(id,title){
-  current=id;
+async function openPage(id){
+  current = id;
 
-  const res=await fetch(API,{
+  const res = await fetch(API,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({action:"getPage",id})
   });
 
-  const data=await res.json();
+  const data = await res.json();
 
-  titleEl.innerText=data.page.title;
-  editor.value=data.page.content;
+  title.innerText = data.page.title;
+  editor.value = data.page.content;
 }
 
 /* ================= SAVE ================= */
@@ -165,7 +151,12 @@ async function save(){
     })
   });
 
-  log("saved");
+  alert("Saved");
+}
+
+function logout(){
+  localStorage.removeItem("user");
+  location.reload();
 }
 </script>
 
