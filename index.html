@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wiki Engine</title>
+<title>Static Wiki Engine</title>
 
 <style>
 body {
@@ -74,24 +74,31 @@ audio {
   </div>
 
   <div id="content">
-    <h2 id="title">Select a page</h2>
-    <div id="page"></div>
+    <h2 id="title">Wiki</h2>
+    <div id="page">Select a page</div>
   </div>
 
 </div>
 
 <script>
 
+/* ================= SOURCE OF TRUTH ================= */
 let pages = [];
 
 /* ================= LOAD MANIFEST ================= */
-async function loadManifest() {
-  const res = await fetch("manifest.json");
-  pages = await res.json();
+async function loadPages() {
+  try {
+    const res = await fetch("manifest.json");
+    pages = await res.json();
+  } catch (e) {
+    // fallback if manifest missing
+    pages = ["amber", "lisa"];
+  }
+
   renderList();
 }
 
-/* ================= RENDER LIST ================= */
+/* ================= LIST ================= */
 function renderList() {
   const q = search.value.toLowerCase();
   list.innerHTML = "";
@@ -120,15 +127,13 @@ async function loadPage(name) {
   page.innerHTML = markdown(text);
 }
 
-/* ================= ASSET PARSER ================= */
+/* ================= ASSETS ================= */
 function parseAssets(folder, text) {
 
-  // IMAGE TAGS
   text = text.replace(/image::(.*)/g, (m, src) => {
     return `<img src="pages/${folder}/${src.trim()}">`;
   });
 
-  // MP3 TAGS
   text = text.replace(/mp3::(.*)/g, (m, src) => {
     return `
       <audio controls>
@@ -151,7 +156,7 @@ function markdown(text) {
 }
 
 /* ================= START ================= */
-loadManifest();
+loadPages();
 
 </script>
 
