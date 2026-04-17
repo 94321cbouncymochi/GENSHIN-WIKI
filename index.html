@@ -9,18 +9,33 @@ body {
   font-family: Arial;
   background:#0b0f1a;
   color:white;
+  margin:0;
+  padding:0;
 }
 
 input, textarea {
   width:100%;
   padding:10px;
   margin:5px 0;
+  box-sizing:border-box;
+  background:#111827;
+  color:white;
+  border:1px solid #333;
+  border-radius:6px;
 }
 
 button {
   padding:10px;
   margin:5px;
   cursor:pointer;
+  background:#2563eb;
+  border:none;
+  color:white;
+  border-radius:6px;
+}
+
+button:hover {
+  background:#1d4ed8;
 }
 
 /* ================= LOADING OVERLAY ================= */
@@ -55,9 +70,13 @@ button {
 }
 
 #pages div {
-  padding:6px;
+  padding:10px;
   border-bottom:1px solid #333;
   cursor:pointer;
+}
+
+#pages div:hover {
+  background:#111827;
 }
 </style>
 </head>
@@ -70,6 +89,7 @@ button {
   <div id="loadingText">Loading...</div>
 </div>
 
+<!-- LOGIN -->
 <div id="loginBox">
   <h2>Login</h2>
 
@@ -80,30 +100,38 @@ button {
   <button onclick="signup()">Signup</button>
 </div>
 
-<div id="wiki" style="display:none">
-
+<!-- WIKI -->
+<div id="wiki" style="display:none; padding:10px;">
   <h2>Wiki</h2>
 
-  <button onclick="loadPages()">Load Pages</button>
+  <button onclick="loadPages()">Reload Pages</button>
   <button onclick="logout()">Logout</button>
 
   <div id="pages"></div>
 
   <h3 id="title"></h3>
-  <textarea id="editor"></textarea>
+  <textarea id="editor" rows="10"></textarea>
 
   <button onclick="save()">Save</button>
-
 </div>
 
 <script>
-
 const API = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR9VRaaCyfL1FekDG9npiHBXurFzY8kgfFufzMq69yVg/exec";
 
+/* ================= ELEMENTS ================= */
+const loginBox = document.getElementById("loginBox");
+const wiki = document.getElementById("wiki");
+const pages = document.getElementById("pages");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const editor = document.getElementById("editor");
+const title = document.getElementById("title");
+
+/* ================= STATE ================= */
 let user = null;
 let current = null;
 
-/* ================= LOADING SYSTEM ================= */
+/* ================= LOADING ================= */
 function showLoading(text="Loading...") {
   document.getElementById("loadingText").innerText = text;
   document.getElementById("loading").style.display = "flex";
@@ -113,19 +141,25 @@ function hideLoading() {
   document.getElementById("loading").style.display = "none";
 }
 
-/* ================= SAFE FETCH WRAPPER ================= */
+/* ================= API WRAPPER ================= */
 async function api(url, loadingText="Loading...") {
   showLoading(loadingText);
 
   try {
     const res = await fetch(url);
     const data = await res.json();
+
     hideLoading();
+
+    if (!data) throw new Error("Empty response");
+
     return data;
+
   } catch (err) {
     hideLoading();
-    alert("Network error");
-    throw err;
+    console.error(err);
+    alert("Network / API error");
+    return { success: false, message: "network error" };
   }
 }
 
@@ -149,7 +183,7 @@ async function login() {
 
     loadPages();
   } else {
-    alert("Login failed");
+    alert(data.message || "Login failed");
   }
 }
 
@@ -159,13 +193,13 @@ async function signup() {
   const url =
     API +
     "?action=signup" +
-    "&username=user" +
+    "&username=" + encodeURIComponent("user") +
     "&email=" + encodeURIComponent(email.value) +
     "&password=" + encodeURIComponent(password.value);
 
   const data = await api(url, "Creating account...");
 
-  alert(JSON.stringify(data));
+  alert(data.message || JSON.stringify(data));
 }
 
 /* ================= LOAD PAGES ================= */
@@ -176,6 +210,11 @@ async function loadPages() {
   const data = await api(url, "Loading pages...");
 
   pages.innerHTML = "";
+
+  if (!data.success) {
+    pages.innerHTML = "Failed to load pages";
+    return;
+  }
 
   data.pages.forEach(p => {
     const div = document.createElement("div");
@@ -192,32 +231,44 @@ async function openPage(id) {
 
   current = id;
 
-  const url = API + "?action=getPage&id=" + id;
+  const url = API + "?action=getPage&id=" + encodeURIComponent(id);
 
   const data = await api(url, "Opening page...");
 
+  if (!data.success) {
+    alert(data.message || "Failed to open page");
+    return;
+  }
+
   title.innerText = data.page.title;
-  editor.value = data.page.content;
+  editor.value = data.page.content || "";
 }
 
 /* ================= SAVE ================= */
 async function save() {
 
+  if (!current) return alert("No page selected");
+
   const url =
     API +
     "?action=updatePage" +
-    "&id=" + current +
+    "&id=" + encodeURIComponent(current) +
     "&content=" + encodeURIComponent(editor.value) +
-    "&editor=" + encodeURIComponent(user.email);
+    "&editor=" + encodeURIComponent(user?.email || "unknown");
 
-  await api(url, "Saving page...");
+  const data = await api(url, "Saving page...");
 
-  alert("Saved!");
+  if (data.success) {
+    alert("Saved!");
+  } else {
+    alert(data.message || "Save failed");
+  }
 }
 
 /* ================= AUTO LOGIN ================= */
 window.onload = () => {
   const saved = localStorage.getItem("user");
+
   if (saved) {
     user = JSON.parse(saved);
 
@@ -228,11 +279,11 @@ window.onload = () => {
   }
 };
 
+/* ================= LOGOUT ================= */
 function logout() {
   localStorage.removeItem("user");
   location.reload();
 }
-
 </script>
 
 </body>
