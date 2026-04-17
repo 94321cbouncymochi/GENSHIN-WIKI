@@ -2,22 +2,20 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Wiki</title>
+<title>Wiki System</title>
 
 <style>
 body { font-family: Arial; background:#0b0f1a; color:white; }
 
-#loginBox, #wiki { padding:20px; }
-
 input, textarea {
   width:100%;
-  margin:5px 0;
   padding:10px;
+  margin:5px 0;
 }
 
 button {
-  margin:5px;
   padding:10px;
+  margin:5px;
 }
 
 #debug {
@@ -35,12 +33,14 @@ button {
 
 <body>
 
-<div id="debug">DEBUG: waiting...</div>
+<div id="debug">DEBUG: ready</div>
 
 <div id="loginBox">
   <h2>Login</h2>
+
   <input id="email" placeholder="email">
   <input id="password" type="password" placeholder="password">
+
   <button onclick="login()">Login</button>
   <button onclick="signup()">Signup</button>
 </div>
@@ -49,7 +49,6 @@ button {
   <h2>Wiki</h2>
 
   <button onclick="loadPages()">Load Pages</button>
-  <button onclick="logout()">Logout</button>
 
   <div id="pages"></div>
 
@@ -62,27 +61,48 @@ button {
 <script>
 const API = "https://script.google.com/macros/s/AKfycbxPCEBLslQVpHCJAJeal6ao-KuR9VRaaCyfL1FekDG9npiHBXurFzY8kgfFufzMq69yVg/exec";
 
-let user=null;
-let current=null;
+let user = null;
+let current = null;
 
 function log(msg){
   document.getElementById("debug").innerText = msg;
 }
 
 /* ================= LOGIN ================= */
-async function login() {
-  log("testing fetch...");
+async function login(){
+  log("logging in...");
 
-  try {
-    const res = await fetch(API);
-    log("fetch succeeded: " + res.status);
-  } catch (e) {
-    log("FETCH BLOCKED: " + e);
+  const res = await fetch(API, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      action:"login",
+      email:email.value,
+      password:password.value
+    })
+  });
+
+  const data = await res.json();
+  log(JSON.stringify(data));
+
+  if(data.success){
+    user = data;
+    localStorage.setItem("user", JSON.stringify(user));
+
+    loginBox.style.display="none";
+    wiki.style.display="block";
+
+    loadPages();
+
+    log("LOGIN SUCCESS");
+  } else {
+    log("LOGIN FAILED: " + data.message);
   }
 }
+
 /* ================= SIGNUP ================= */
 async function signup(){
-  const res = await fetch(API,{
+  const res = await fetch(API, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
@@ -111,13 +131,13 @@ async function loadPages(){
   data.pages.forEach(p=>{
     const div=document.createElement("div");
     div.innerText=p.title;
-    div.onclick=()=>open(p.id,p.title);
+    div.onclick=()=>openPage(p.id,p.title);
     pages.appendChild(div);
   });
 }
 
 /* ================= OPEN ================= */
-async function open(id,title){
+async function openPage(id,title){
   current=id;
 
   const res=await fetch(API,{
@@ -146,11 +166,6 @@ async function save(){
   });
 
   log("saved");
-}
-
-function logout(){
-  localStorage.removeItem("user");
-  location.reload();
 }
 </script>
 
