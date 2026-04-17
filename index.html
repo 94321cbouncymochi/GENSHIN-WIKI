@@ -61,6 +61,13 @@ audio {
   width:100%;
   margin:10px 0;
 }
+
+/* wiki links */
+.wiki-link {
+  color:#60a5fa;
+  cursor:pointer;
+  text-decoration:underline;
+}
 </style>
 </head>
 
@@ -124,70 +131,83 @@ async function loadPage(name) {
 
   try {
     const res = await fetch(url);
-
     if (!res.ok) {
-      page.innerHTML = "❌ Failed to load page: " + res.status;
+      page.innerHTML = "❌ Failed to load page";
       return;
     }
 
     let text = await res.text();
 
     text = parseAssets(name, text);
-
-    page.innerHTML = markdown(text);
+    page.innerHTML = renderMarkdown(text);
 
   } catch (err) {
     page.innerHTML = "❌ Network error";
   }
 }
 
-/* ================= CLEANER ================= */
+/* ================= CLEAN ================= */
 function clean(str) {
   return str.replace(/\r/g, "").replace(/\n/g, "").trim();
 }
 
-/* ================= ASSET PARSER (RAW MODE) ================= */
+/* ================= ASSETS (RAW ONLY) ================= */
 function parseAssets(folder, text) {
 
-  // 🖼️ IMAGES (RAW ONLY)
+  // IMAGE
   text = text.replace(/image::(.*)/g, (m, src) => {
-
     const file = clean(src);
 
     const url = file.startsWith("http")
       ? file
       : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
 
-    return `<img src="${url}" onerror="this.style.border='3px solid red';">`;
+    return `[[IMG:${url}]]`;
   });
 
-  // 🎵 MP3 (RAW ONLY)
+  // MP3
   text = text.replace(/mp3::(.*)/g, (m, src) => {
-
     const file = clean(src);
 
     const url = file.startsWith("http")
       ? file
       : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
 
-    return `
-      <audio controls>
-        <source src="${url}" type="audio/mpeg">
-      </audio>
-    `;
+    return `[[MP3:${url}]]`;
   });
 
   return text;
 }
 
-/* ================= MINI MARKDOWN ================= */
-function markdown(text) {
-  return text
-    .replace(/^### (.*)$/gim, "<h3>$1</h3>")
-    .replace(/^## (.*)$/gim, "<h2>$1</h2>")
-    .replace(/^# (.*)$/gim, "<h1>$1</h1>")
-    .replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>")
-    .replace(/\n/g, "<br>");
+/* ================= MARKDOWN + WIKI LINKS ================= */
+function renderMarkdown(text) {
+
+  let html = text;
+
+  // headings
+  html = html.replace(/^### (.*)$/gim, "<h3>$1</h3>");
+  html = html.replace(/^## (.*)$/gim, "<h2>$1</h2>");
+  html = html.replace(/^# (.*)$/gim, "<h1>$1</h1>");
+
+  // bold
+  html = html.replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>");
+
+  // wiki links [[PageName]]
+  html = html.replace(/\[\[(.*?)\]\]/g, (m, p1) => {
+    return `<span class="wiki-link" onclick="loadPage('${p1}')">${p1}</span>`;
+  });
+
+  // restore images
+  html = html.replace(/\[\[IMG:(.*?)\]\]/g,
+    `<img src="$1" onerror="this.style.border='3px solid red';">`
+  );
+
+  // restore mp3
+  html = html.replace(/\[\[MP3:(.*?)\]\]/g,
+    `<audio controls><source src="$1" type="audio/mpeg"></audio>`
+  );
+
+  return html;
 }
 
 /* ================= START ================= */
