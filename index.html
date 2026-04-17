@@ -2,7 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Static Wiki Engine</title>
+<title>Wiki Engine (Fixed Properly)</title>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
 body {
@@ -62,11 +64,8 @@ audio {
   margin:10px 0;
 }
 
-/* wiki links */
-.wiki-link {
+a {
   color:#60a5fa;
-  cursor:pointer;
-  text-decoration:underline;
 }
 </style>
 </head>
@@ -91,16 +90,14 @@ audio {
 
 /* ================= CONFIG ================= */
 const BASE_URL = "https://coolpython53.github.io/GENSHIN-WIKI/";
-
-/* ================= DATA ================= */
 let pages = [];
 
-/* ================= LOAD MANIFEST ================= */
+/* ================= LOAD PAGES ================= */
 async function loadPages() {
   try {
     const res = await fetch(BASE_URL + "manifest.json");
     pages = await res.json();
-  } catch (e) {
+  } catch {
     pages = [];
   }
   renderList();
@@ -131,83 +128,43 @@ async function loadPage(name) {
 
   try {
     const res = await fetch(url);
-    if (!res.ok) {
-      page.innerHTML = "❌ Failed to load page";
-      return;
-    }
-
     let text = await res.text();
 
-    text = parseAssets(name, text);
-    page.innerHTML = renderMarkdown(text);
+    text = convertAssets(name, text);
 
-  } catch (err) {
-    page.innerHTML = "❌ Network error";
+    page.innerHTML = marked.parse(text);
+
+  } catch {
+    page.innerHTML = "❌ Failed to load page";
   }
 }
 
-/* ================= CLEAN ================= */
-function clean(str) {
-  return str.replace(/\r/g, "").replace(/\n/g, "").trim();
-}
-
-/* ================= ASSETS (RAW ONLY) ================= */
-function parseAssets(folder, text) {
+/* ================= RAW ASSET SYSTEM ================= */
+function convertAssets(folder, text) {
 
   // IMAGE
   text = text.replace(/image::(.*)/g, (m, src) => {
-    const file = clean(src);
+    const file = src.trim();
 
     const url = file.startsWith("http")
       ? file
       : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
 
-    return `[[IMG:${url}]]`;
+    return `![](${url})`;
   });
 
   // MP3
   text = text.replace(/mp3::(.*)/g, (m, src) => {
-    const file = clean(src);
+    const file = src.trim();
 
     const url = file.startsWith("http")
       ? file
       : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
 
-    return `[[MP3:${url}]]`;
+    return `<audio controls><source src="${url}" type="audio/mpeg"></audio>`;
   });
 
   return text;
-}
-
-/* ================= MARKDOWN + WIKI LINKS ================= */
-function renderMarkdown(text) {
-
-  let html = text;
-
-  // headings
-  html = html.replace(/^### (.*)$/gim, "<h3>$1</h3>");
-  html = html.replace(/^## (.*)$/gim, "<h2>$1</h2>");
-  html = html.replace(/^# (.*)$/gim, "<h1>$1</h1>");
-
-  // bold
-  html = html.replace(/\*\*(.*?)\*\*/gim, "<b>$1</b>");
-
-  // wiki links [[PageName]]
-  html = html.replace(/\[\[(.*?)\]\]/g, (m, p1) => {
-    return `<span class="wiki-link" onclick="loadPage('${p1}')">${p1}</span>`;
-  });
-
-  // restore images
-  html = html.replace(/\[\[IMG:(.*?)\]\]/g,
-    `<img src="$1" onerror="this.style.border='3px solid red';">`
-  );
-
-  // restore mp3
-  html = html.replace(/\[\[MP3:(.*?)\]\]/g,
-    `<audio controls><source src="$1" type="audio/mpeg"></audio>`
-  );
-
-  return html;
 }
 
 /* ================= START ================= */
