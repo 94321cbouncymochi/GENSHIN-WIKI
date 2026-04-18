@@ -37,6 +37,9 @@ input {
 }
 
 .item {
+  display:flex;
+  align-items:center;
+  gap:8px;
   padding:6px;
   cursor:pointer;
   border-radius:6px;
@@ -44,6 +47,12 @@ input {
 
 .item:hover {
   background:#1f2937;
+}
+
+.icon {
+  width:18px;
+  height:18px;
+  border-radius:4px;
 }
 
 .folder {
@@ -67,7 +76,6 @@ audio {
 
 a {
   color:#60a5fa;
-  cursor:pointer;
 }
 </style>
 </head>
@@ -93,15 +101,26 @@ const BASE_URL = "https://coolpython53.github.io/GENSHIN-WIKI/";
 let pages = [];
 let expanded = new Set();
 
-/* ---------------- MARKED SAFE HTML ---------------- */
+/* ---------------- UTIL: FIX PATH ---------------- */
+
+function normalizePath(path){
+  return path
+    .replace(/^pages\//,"")
+    .replace(/^\/+/,"")
+    .replace(/\/+/g,"/");
+}
+
+/* ---------------- MARKED ---------------- */
+
 marked.setOptions({
   breaks: true,
   gfm: true,
   headerIds: false,
-  mangle: false
+  mangle: false,
+  sanitize: false
 });
 
-/* ---------------- LOAD PAGES ---------------- */
+/* ---------------- LOAD MANIFEST ---------------- */
 
 async function loadPages(){
   const res = await fetch(BASE_URL + "manifest.json?t=" + Date.now());
@@ -132,7 +151,23 @@ function buildTree(paths){
   return root;
 }
 
-/* ---------------- RENDER TREE ---------------- */
+/* ---------------- BLUEPRINT ---------------- */
+
+async function getBlueprint(fullPath){
+  const base = `${BASE_URL}pages/${fullPath}/blueprint`;
+  const exts = ["jpg","png","webp","jpeg"];
+
+  for(const ext of exts){
+    const url = `${base}.${ext}`;
+    try {
+      const res = await fetch(url, { method:"HEAD" });
+      if(res.ok) return url;
+    } catch {}
+  }
+  return null;
+}
+
+/* ---------------- TREE RENDER ---------------- */
 
 function renderTree(){
   tree.innerHTML = "";
@@ -144,7 +179,7 @@ function renderTree(){
   renderNode(treeData, tree, 0);
 }
 
-/* ---------------- NODE RENDER ---------------- */
+/* ---------------- NODE ---------------- */
 
 function renderNode(node, container, depth){
   for(const key of Object.keys(node)){
@@ -157,26 +192,37 @@ function renderNode(node, container, depth){
     div.className = "item";
     div.style.marginLeft = depth * 16 + "px";
 
+    const icon = document.createElement("img");
+    icon.className = "icon";
+
     const label = document.createElement("span");
     label.textContent = key.replace(/_/g,' ');
     if(isFolder) label.className = "folder";
 
-    div.onclick = () => {
-      if(isFolder){
-        expanded.has(fullPath)
-          ? expanded.delete(fullPath)
-          : expanded.add(fullPath);
+    getBlueprint(fullPath).then(url=>{
+      if(url) icon.src = url;
+    });
 
+    div.onclick = ()=>{
+      const cleanPath = normalizePath(fullPath);
+
+      if(isFolder){
+        expanded.has(cleanPath)
+          ? expanded.delete(cleanPath)
+          : expanded.add(cleanPath);
+
+        openFolder(cleanPath);
         renderTree();
       } else {
-        loadPage(fullPath);
+        openPage(cleanPath);
       }
     };
 
+    div.appendChild(icon);
     div.appendChild(label);
     container.appendChild(div);
 
-    if(isFolder && expanded.has(fullPath)){
+    if(isFolder && expanded.has(normalizePath(fullPath))){
       const child = document.createElement("div");
       renderNode(children, child, depth+1);
       container.appendChild(child);
@@ -184,60 +230,139 @@ function renderNode(node, container, depth){
   }
 }
 
-/* ---------------- SAFE PATH RESOLVER ---------------- */
+/* ---------------- RESOLVE ASSET ---------------- */
 
 function resolveAsset(fullPath, file){
   file = file.trim();
 
-  if(file.startsWith("http://") || file.startsWith("https://")){
-    return file;
-  }
+  if(file.startsWith("http")) return file;
 
   file = file.split("/").pop();
+
+  fullPath = normalizePath(fullPath);
 
   return `${BASE_URL}pages/${fullPath}/${file}`;
 }
 
-/* ---------------- PAGE LOADER ---------------- */
+/* ---------------- OPEN FOLDER (STRICT) ---------------- */
 
-async function loadPage(fullPath){
+async function openFolder(fullPath){
+
+  fullPath = normalizePath(fullPath);
+
   title.innerText = fullPath.split("/").pop();
-  page.innerHTML = "Loading...";
+
+  const res = await fetch(`${BASE_URL}pages/${fullPath}/folder.md?t=${Date.now()}`);
+
+  if(!res.ok){
+    page.innerHTML = "📁 Missing folder.md";
+    return;
+  }
+
+  const text = await res.text();
+  renderPage(text, fullPath);
+}
+
+/* ---------------- OPEN PAGE (STRICT) ---------------- */
+
+async function openPage(fullPath){
+
+  fullPath = normalizePath(fullPath);
+
+  title.innerText = fullPath.split("/").pop();
 
   const res = await fetch(`${BASE_URL}pages/${fullPath}/page.md?t=${Date.now()}`);
 
   if(!res.ok){
-    page.innerHTML = "Not found";
+    page.innerHTML = "❌ Missing page.md";
     return;
   }
 
-  let text = await res.text();
-
-  /* IMAGE FIX */
-  text = text.replace(/image::([^\n]+)/g,(m,file)=>{
-    const url = resolveAsset(fullPath, file);
-    return `<img src="${url}" onerror="this.style.display='none'">`;
-  });
-
-  /* AUDIO FIX */
-  text = text.replace(/mp3::([^\n]+)/g,(m,file)=>{
-    const url = resolveAsset(fullPath, file);
-    return `
-      <audio controls>
-        <source src="${url}" type="audio/mpeg">
-      </audio>
-    `;
-  });
-
-  page.innerHTML = marked.parse(text);
+  const text = await res.text();
+  renderPage(text, fullPath);
 }
 
-/* ---------------- SEARCH ---------------- */
+/* ---------------- LINK FIX ---------------- */
 
-search.oninput = renderTree;
+function convertLinks(text){
+  return text.replace(/\{\[([^\]]+)\]page::([^\}]+)\}/g,(m,label,path)=>{
+    path = normalizePath(path).replace(/\.md$/,"");
+    return `<a href="#" data-page="${path}">${label}</a>`;
+  });
+}
+
+/* ---------------- RENDER ENGINE ---------------- */
+
+function renderPage(text, fullPath){
+
+  let audioMap = new Map();
+  let audioIndex = 0;
+
+  /* IMAGES */
+  text = text.replace(/image::([^\n]+)/g,(m,input)=>{
+    let [file, size] = input.split("::::");
+    const url = resolveAsset(fullPath, file);
+
+    return `<img src="${url}" style="${size ? `width:${size}%;` : ''}">`;
+  });
+
+  /* AUDIO */
+  text = text.replace(/mp3::([^\n]+)/g,(m,input)=>{
+    let [file, vol] = input.split("::::");
+
+    const url = resolveAsset(fullPath, file);
+    const id = "aud_" + audioIndex++;
+
+    audioMap.set(id, {
+      url,
+      vol: vol ? Number(vol)/100 : 1
+    });
+
+    return `<span id="${id}"></span>`;
+  });
+
+  /* LINKS */
+  text = convertLinks(text);
+
+  page.innerHTML = marked.parse(text);
+
+  /* LINK EVENTS */
+  page.querySelectorAll("a[data-page]").forEach(a=>{
+    a.onclick = (e)=>{
+      e.preventDefault();
+      openPage(a.dataset.page);
+    };
+  });
+
+  /* AUDIO INJECTION */
+  requestAnimationFrame(()=>{
+    audioMap.forEach((data,id)=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+
+      const audio = document.createElement("audio");
+      audio.controls = true;
+
+      const src = document.createElement("source");
+      src.src = data.url;
+      src.type = "audio/mpeg";
+
+      audio.appendChild(src);
+
+      audio.addEventListener("loadedmetadata", ()=>{
+        audio.volume = data.vol;
+      });
+
+      el.replaceWith(audio);
+    });
+
+    audioMap.clear();
+  });
+}
 
 /* ---------------- START ---------------- */
 
+search.oninput = renderTree;
 loadPages();
 
 </script>
