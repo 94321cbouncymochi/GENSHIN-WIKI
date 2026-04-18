@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Static Wiki Engine (Fast Icons v2)</title>
+<title>Genshin Impact Wiki</title>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
@@ -87,7 +87,7 @@ let expandedFolders = new Set();
 let imageStore = [];
 let iconCache = new Map();
 
-/* ---------------- SEARCH DEBOUNCE ---------------- */
+/* ---------------- SEARCH ---------------- */
 
 let searchTimeout;
 search.oninput = () => {
@@ -128,20 +128,17 @@ function buildTree(paths){
   return root;
 }
 
-/* ---------------- ICON SYSTEM (FAST + MULTI FORMAT) ---------------- */
-
-const ICON_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+/* ---------------- ICONS (SAFE FAST) ---------------- */
 
 function getIcon(path){
   if(iconCache.has(path)) return iconCache.get(path);
 
-  // start with cheapest guess (no network checks)
   const url = `${BASE_URL}pages/${path}/blueprint.jpg`;
   iconCache.set(path, url);
   return url;
 }
 
-/* ---------------- RENDER TREE ---------------- */
+/* ---------------- TREE RENDER ---------------- */
 
 function renderTree(){
   const q = search.value.toLowerCase();
@@ -153,7 +150,7 @@ function renderTree(){
   renderNode(treeData, tree, 0);
 }
 
-/* ---------------- NODE RENDER ---------------- */
+/* ---------------- NODE ---------------- */
 
 function renderNode(node, container, depth = 0){
   for (const key of Object.keys(node)) {
@@ -174,20 +171,9 @@ function renderNode(node, container, depth = 0){
       <img class="icon"
            src="${icon}"
            onerror="
-             if(!this.dataset.step){
-               this.dataset.step='1';
-               this.src='${BASE_URL}pages/${fullPath}/blueprint.png';
-             } else if(this.dataset.step==='1'){
-               this.dataset.step='2';
-               this.src='${BASE_URL}pages/${fullPath}/blueprint.jpeg';
-             } else if(this.dataset.step==='2'){
-               this.dataset.step='3';
-               this.src='${BASE_URL}pages/${fullPath}/blueprint.webp';
-             } else {
-               this.src='${FALLBACK_ICON}';
-             }
-           "
-      >
+             this.onerror=null;
+             this.src='${FALLBACK_ICON}';
+           ">
       <span class="${hasChildren ? 'folder' : ''}">
         ${key.replace(/_/g,' ')}
       </span>
@@ -220,7 +206,7 @@ function renderNode(node, container, depth = 0){
   }
 }
 
-/* ---------------- PAGE LOADING ---------------- */
+/* ---------------- PAGE LOAD ---------------- */
 
 async function loadPage(fullPath){
   title.innerText = fullPath.split("/").pop().replace(/_/g,' ');
@@ -245,19 +231,21 @@ async function loadPage(fullPath){
   }
 }
 
-/* ---------------- ASSETS ---------------- */
+/* ---------------- ASSETS FIXED ---------------- */
 
 function convertAssets(fullPath, text){
   imageStore = [];
 
   text = text.replace(/image::([^\n]+)/g,(m,raw)=>{
-    const url = resolvePath(fullPath, raw.trim());
+    const file = raw.trim();
+    const url = `${BASE_URL}pages/${fullPath}/${file}`;
     imageStore.push(`<img src="${url}">`);
     return `@@IMG${imageStore.length-1}@@`;
   });
 
   text = text.replace(/mp3::(.*)/g,(m,src)=>{
-    const url = resolvePath(fullPath, src.trim());
+    const file = src.trim();
+    const url = `${BASE_URL}pages/${fullPath}/${file}`;
     return `<audio controls><source src="${url}" type="audio/mpeg"></audio>`;
   });
 
@@ -282,17 +270,6 @@ function convertPageLinks(text){
 function openWikiPath(rawPath){
   let path = rawPath.replace(/^pages\//,"").replace(/\/$/, "");
   loadPage(path);
-}
-
-/* ---------------- UTIL ---------------- */
-
-function resolvePath(base,file){
-  const stack = base.split("/");
-  file.split("/").forEach(p=>{
-    if(p && p !== ".") stack.push(p);
-  });
-
-  return `${BASE_URL}pages/${stack.join("/")}`;
 }
 
 /* ---------------- START ---------------- */
