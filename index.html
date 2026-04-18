@@ -86,6 +86,7 @@ let pages = [];
 let expandedFolders = new Set();
 let imageStore = [];
 let iconCache = new Map();
+let iconPromises = new Map();
 
 /* ---------------- SEARCH ---------------- */
 
@@ -128,17 +129,38 @@ function buildTree(paths){
   return root;
 }
 
-/* ---------------- ICONS (FIXED) ---------------- */
+/* ---------------- ICON RESOLVER (NO CONSOLE ERRORS) ---------------- */
 
-function getIcon(path){
-  if(iconCache.has(path)) return iconCache.get(path);
+async function resolveIcon(path){
+  if (iconCache.has(path)) return iconCache.get(path);
+  if (iconPromises.has(path)) return iconPromises.get(path);
 
-  const base = `${BASE_URL}pages/${path}/blueprint`;
+  const promise = (async () => {
+    const base = `${BASE_URL}pages/${path}/blueprint`;
+    const exts = ["jpg", "png", "webp", "jpeg"];
 
-  const url = `${base}.jpg`; // default guess (fast path)
-  iconCache.set(path, url);
+    for (const ext of exts) {
+      const url = `${base}.${ext}`;
 
-  return url;
+      const ok = await new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+
+      if (ok) {
+        iconCache.set(path, url);
+        return url;
+      }
+    }
+
+    iconCache.set(path, FALLBACK_ICON);
+    return FALLBACK_ICON;
+  })();
+
+  iconPromises.set(path, promise);
+  return promise;
 }
 
 /* ---------------- TREE RENDER ---------------- */
@@ -168,20 +190,18 @@ function renderNode(node, container, depth = 0){
     div.className = "item";
     div.style.marginLeft = depth * 16 + "px";
 
-    const icon = getIcon(fullPath);
+    const img = document.createElement("img");
+    img.className = "icon";
+    img.alt = "";
 
-    div.innerHTML = `
-      <img class="icon"
-           src="${icon}"
-           onerror="
-             if(this.src.includes('.jpg')) this.src='${BASE_URL}pages/${fullPath}/blueprint.png';
-             else if(this.src.includes('.png')) this.src='${BASE_URL}pages/${fullPath}/blueprint.webp';
-             else this.src='${FALLBACK_ICON}';
-           ">
-      <span class="${hasChildren ? 'folder' : ''}">
-        ${key.replace(/_/g,' ')}
-      </span>
-    `;
+    // 🔥 NO CONSOLE ERRORS: only sets src when valid
+    resolveIcon(fullPath).then(url => {
+      img.src = url;
+    });
+
+    const label = document.createElement("span");
+    label.className = hasChildren ? "folder" : "";
+    label.textContent = key.replace(/_/g,' ');
 
     div.onclick = (e) => {
       e.stopPropagation();
@@ -197,6 +217,9 @@ function renderNode(node, container, depth = 0){
         loadPage(fullPath);
       }
     };
+
+    div.appendChild(img);
+    div.appendChild(label);
 
     wrapper.appendChild(div);
 
