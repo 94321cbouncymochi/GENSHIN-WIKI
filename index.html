@@ -19,7 +19,6 @@ body {
   height:100vh;
 }
 
-/* SIDEBAR */
 #sidebar {
   width:300px;
   background:#111827;
@@ -31,36 +30,40 @@ input {
   width:100%;
   padding:10px;
   margin-bottom:10px;
-  box-sizing:border-box;
   background:#0f172a;
   color:white;
   border:1px solid #333;
   border-radius:6px;
 }
 
-/* PAGE ITEM */
-.page {
+/* TREE ITEMS */
+.item {
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:8px;
+  gap:8px;
+  padding:6px;
   cursor:pointer;
-  border-bottom:1px solid #222;
+  border-radius:6px;
 }
 
-.page:hover {
+.item:hover {
   background:#1f2937;
 }
 
-/* ICON */
-.page img {
-  width:22px;
-  height:22px;
-  object-fit:cover;
+.folder {
+  font-weight:bold;
+}
+
+.indent {
+  margin-left:16px;
+}
+
+img.icon {
+  width:18px;
+  height:18px;
   border-radius:4px;
 }
 
-/* CONTENT */
 #content {
   flex:1;
   padding:20px;
@@ -69,18 +72,11 @@ input {
 
 img {
   max-width:100%;
-  margin-top:10px;
   border-radius:10px;
 }
 
 audio {
   width:100%;
-  margin:10px 0;
-}
-
-/* LINKS */
-a {
-  color:#60a5fa;
 }
 </style>
 </head>
@@ -90,8 +86,8 @@ a {
 <div id="layout">
 
   <div id="sidebar">
-    <input id="search" placeholder="Search pages..." oninput="renderList()" />
-    <div id="list"></div>
+    <input id="search" placeholder="Search..." oninput="renderTree()" />
+    <div id="tree"></div>
   </div>
 
   <div id="content">
@@ -103,13 +99,12 @@ a {
 
 <script>
 
-/* ================= CONFIG ================= */
 const BASE_URL = "https://coolpython53.github.io/GENSHIN-WIKI/";
-const ICON_URL = BASE_URL + "blueprint.jpg";
+const FALLBACK_ICON = BASE_URL + "blueprint.jpg";
 
 let pages = [];
 
-/* ================= LOAD PAGES ================= */
+/* ================= LOAD ================= */
 async function loadPages() {
   try {
     const res = await fetch(BASE_URL + "manifest.json");
@@ -117,50 +112,101 @@ async function loadPages() {
   } catch {
     pages = [];
   }
-  renderList();
+  renderTree();
 }
 
-/* ================= SIDEBAR ================= */
-function renderList() {
-  const q = search.value.toLowerCase();
-  list.innerHTML = "";
+/* ================= BUILD TREE ================= */
+function buildTree(paths) {
+  const root = {};
 
-  pages
-    .filter(p => p.toLowerCase().includes(q))
-    .forEach(p => {
+  paths.forEach(path => {
+    const parts = path.split("/");
+    let current = root;
 
-      const div = document.createElement("div");
-      div.className = "page";
-
-      div.innerHTML = `
-        <img src="${ICON_URL}" alt="icon">
-        <span>${p}</span>
-      `;
-
-      div.onclick = () => loadPage(p);
-
-      list.appendChild(div);
+    parts.forEach((part, i) => {
+      if (!current[part]) {
+        current[part] = {
+          __children: {},
+          __path: parts.slice(0, i + 1).join("/")
+        };
+      }
+      current = current[part].__children;
     });
+  });
+
+  return root;
+}
+
+/* ================= RENDER TREE ================= */
+function renderTree() {
+  const q = search.value.toLowerCase();
+  tree.innerHTML = "";
+
+  const filtered = pages.filter(p => p.toLowerCase().includes(q));
+  const treeData = buildTree(filtered);
+
+  renderNode(treeData, tree);
+}
+
+function renderNode(node, container, depth = 0) {
+  Object.keys(node).forEach(key => {
+
+    const item = node[key];
+    const hasChildren = Object.keys(item.__children).length > 0;
+    const fullPath = item.__path;
+
+    const div = document.createElement("div");
+    div.className = "item indent";
+    div.style.marginLeft = depth * 16 + "px";
+
+    const iconUrl = `${BASE_URL}pages/${fullPath}/blueprint.jpg`;
+
+    div.innerHTML = `
+      <img class="icon" src="${iconUrl}" onerror="this.src='${FALLBACK_ICON}'">
+      <span class="${hasChildren ? "folder" : ""}">${key}</span>
+    `;
+
+    if (hasChildren) {
+      let open = false;
+
+      div.onclick = () => {
+        open = !open;
+        if (open) {
+          renderNode(item.__children, container, depth + 1);
+        } else {
+          renderTree();
+        }
+      };
+
+    } else {
+      div.onclick = () => loadPage(fullPath);
+    }
+
+    container.appendChild(div);
+  });
 }
 
 /* ================= LOAD PAGE ================= */
-async function loadPage(name) {
+async function loadPage(fullPath) {
+  const name = fullPath.split("/").pop();
 
   title.innerText = name;
   page.innerHTML = "Loading...";
 
-  const url = `${BASE_URL}pages/${encodeURIComponent(name)}/page.md`;
+  const url = `${BASE_URL}pages/${fullPath}/page.md`;
 
   try {
     const res = await fetch(url);
-    let text = await res.text();
 
-    text = convertAssets(name, text);
+    if (!res.ok) throw "no page";
+
+    let text = await res.text();
+    text = convertAssets(fullPath, text);
 
     page.innerHTML = marked.parse(text);
 
   } catch {
-    page.innerHTML = "❌ Failed to load page";
+    page.innerHTML = "📁 Folder (no page.md)";
   }
 }
 
@@ -169,31 +215,36 @@ function clean(str) {
   return str.replace(/\r/g, "").replace(/\n/g, "").trim();
 }
 
-/* ================= ASSETS ================= */
-function convertAssets(folder, text) {
+/* ================= RESOLVE (PAGES ONLY) ================= */
+function resolvePath(basePath, file) {
 
-  // 🖼️ IMAGE → RAW
-  text = text.replace(/image::(.*)/g, (m, src) => {
+  if (file.startsWith("http")) return file;
 
-    const file = clean(src);
+  if (file.startsWith("/")) return "";
 
-    const url = file.startsWith("http")
-      ? file
-      : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
+  const stack = basePath.split("/");
 
-    return `![](${url})`;
+  file.split("/").forEach(part => {
+    if (part === "..") stack.pop();
+    else if (part !== ".") stack.push(part);
   });
 
-  // 🎵 MP3 → RAW
+  return `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${stack.join("/")}`;
+}
+
+/* ================= ASSETS ================= */
+function convertAssets(fullPath, text) {
+
+  text = text.replace(/image::(.*)/g, (m, src) => {
+    const url = resolvePath(fullPath, clean(src));
+    return url ? `![](${url})` : "";
+  });
+
   text = text.replace(/mp3::(.*)/g, (m, src) => {
-
-    const file = clean(src);
-
-    const url = file.startsWith("http")
-      ? file
-      : `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${folder}/${file}`;
-
-    return `<audio controls><source src="${url}" type="audio/mpeg"></audio>`;
+    const url = resolvePath(fullPath, clean(src));
+    return url
+      ? `<audio controls><source src="${url}" type="audio/mpeg"></audio>`
+      : "";
   });
 
   return text;
