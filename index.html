@@ -56,9 +56,6 @@ img { max-width:100%; border-radius:10px; }
 audio { width:100%; }
 
 a { color:#60a5fa; cursor:pointer; }
-
-li { margin:4px 0; cursor:pointer; }
-li:hover { text-decoration:underline; }
 </style>
 </head>
 
@@ -83,13 +80,21 @@ const FALLBACK_ICON = BASE_URL + "blueprint.jpg";
 
 let pages = [];
 let expandedFolders = new Set();
-let imageStore = [];
+
+/* ---------------- MARKDOWN SETTINGS ---------------- */
+
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+  mangle: false,
+  headerIds: false
+});
 
 /* ---------------- SEARCH ---------------- */
 
 search.oninput = () => renderTree();
 
-/* ---------------- LOAD ---------------- */
+/* ---------------- LOAD PAGES ---------------- */
 
 async function loadPages(){
   const res = await fetch(BASE_URL + "manifest.json?t=" + Date.now());
@@ -120,47 +125,56 @@ function buildTree(paths){
   return root;
 }
 
-/* ---------------- SAFE URL ---------------- */
+/* ---------------- ICON ---------------- */
 
-function safeUrl(path, file){
-  return encodeURI(`${BASE_URL}pages/${path}/${file.trim()}`);
-}
-
-/* ---------------- ICON SYSTEM ---------------- */
-
-const iconRegistry = new Map();
+const iconCache = new Map();
 
 async function findIcon(path){
-  if(iconRegistry.has(path)) return iconRegistry.get(path);
+  if(iconCache.has(path)) return iconCache.get(path);
 
   const base = `${BASE_URL}pages/${path}/blueprint`;
   const exts = ["jpg","png","webp","jpeg"];
 
   for(const ext of exts){
     const url = `${base}.${ext}`;
-
     try {
       const res = await fetch(url, { method: "HEAD" });
       if(res.ok){
-        iconRegistry.set(path, url);
+        iconCache.set(path, url);
         return url;
       }
     } catch {}
   }
 
-  iconRegistry.set(path, FALLBACK_ICON);
+  iconCache.set(path, FALLBACK_ICON);
   return FALLBACK_ICON;
 }
 
-/* ---------------- RENDER TREE ---------------- */
+/* ---------------- SAFE ASSET RESOLVER ---------------- */
+
+function resolveAsset(fullPath, file){
+  file = file.trim();
+
+  // external URL → use directly
+  if(file.startsWith("http://") || file.startsWith("https://")){
+    return file;
+  }
+
+  // kill bad nesting like "Syntax/Hello.mp3"
+  file = file.split("/").pop();
+
+  return encodeURI(`${BASE_URL}pages/${fullPath}/${file}`);
+}
+
+/* ---------------- TREE RENDER ---------------- */
 
 function renderTree(){
   tree.innerHTML = "";
 
   const q = search.value.toLowerCase();
   const filtered = pages.filter(p => p.toLowerCase().includes(q));
-  const treeData = buildTree(filtered);
 
+  const treeData = buildTree(filtered);
   renderNode(treeData, tree, 0);
 }
 
@@ -219,7 +233,7 @@ function renderNode(node, container, depth){
   }
 }
 
-/* ---------------- PAGE ---------------- */
+/* ---------------- PAGE LOAD ---------------- */
 
 async function loadPage(fullPath){
   title.innerText = fullPath.split("/").pop().replace(/_/g,' ');
@@ -239,28 +253,21 @@ async function loadPage(fullPath){
   text = convertLinks(text);
 
   page.innerHTML = marked.parse(text);
-  restoreImages();
 }
 
-/* ---------------- ASSETS FIXED ---------------- */
+/* ---------------- ASSETS (FINAL FIX) ---------------- */
 
 function convertAssets(fullPath, text){
-  imageStore = [];
 
-  // IMAGE FIX
+  // IMAGES
   text = text.replace(/image::([^\n]+)/g,(m,file)=>{
-    const url = safeUrl(fullPath, file);
-
-    imageStore.push(
-      `<img src="${url}" onerror="this.style.display='none'">`
-    );
-
-    return `@@IMG${imageStore.length-1}@@`;
+    const url = resolveAsset(fullPath, file);
+    return `<img src="${url}" onerror="this.style.display='none'">`;
   });
 
-  // AUDIO FIX
+  // AUDIO
   text = text.replace(/mp3::([^\n]+)/g,(m,file)=>{
-    const url = safeUrl(fullPath, file);
+    const url = resolveAsset(fullPath, file);
 
     return `
       <audio controls>
@@ -270,15 +277,6 @@ function convertAssets(fullPath, text){
   });
 
   return text;
-}
-
-/* ---------------- RESTORE IMAGES ---------------- */
-
-function restoreImages(){
-  const el = document.getElementById("page");
-  imageStore.forEach((img,i)=>{
-    el.innerHTML = el.innerHTML.replaceAll(`@@IMG${i}@@`, img);
-  });
 }
 
 /* ---------------- LINKS ---------------- */
@@ -293,12 +291,6 @@ function openPage(path){
   path = path.replace(/^pages\//,"").replace(/\/$/,"");
   loadPage(path);
 }
-
-/* ---------------- DEBUG SAFETY NET ---------------- */
-
-window.onerror = (msg, src, line) => {
-  console.log("❌ Error:", msg, src, line);
-};
 
 /* ---------------- START ---------------- */
 
