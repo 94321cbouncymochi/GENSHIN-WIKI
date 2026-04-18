@@ -7,103 +7,41 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
-body {
-  margin:0;
-  font-family: Arial;
-  background:#0b0f1a;
-  color:white;
-}
-
-#layout {
-  display:flex;
-  height:100vh;
-}
-
-#sidebar {
-  width:300px;
-  background:#111827;
-  padding:10px;
-  overflow-y:auto;
-}
-
-input {
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  background:#0f172a;
-  color:white;
-  border:1px solid #333;
-  border-radius:6px;
-}
-
-/* TREE ITEMS */
-.item {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:6px;
-  cursor:pointer;
-  border-radius:6px;
-}
-
-.item:hover {
-  background:#1f2937;
-}
-
-.folder {
-  font-weight:bold;
-}
-
-.indent {
-  margin-left:16px;
-}
-
-img.icon {
-  width:18px;
-  height:18px;
-  border-radius:4px;
-}
-
-#content {
-  flex:1;
-  padding:20px;
-  overflow-y:auto;
-}
-
-img {
-  max-width:100%;
-  border-radius:10px;
-}
-
-audio {
-  width:100%;
-}
+body { margin:0; font-family: Arial; background:#0b0f1a; color:white; }
+#layout { display:flex; height:100vh; }
+#sidebar { width:300px; background:#111827; padding:10px; overflow-y:auto; }
+input { width:100%; padding:10px; margin-bottom:10px; background:#0f172a; color:white; border:1px solid #333; border-radius:6px; }
+.item { display:flex; align-items:center; gap:8px; padding:6px; cursor:pointer; border-radius:6px; }
+.item:hover { background:#1f2937; }
+.folder { font-weight:bold; }
+.indent { margin-left:16px; }
+img.icon { width:18px; height:18px; border-radius:4px; }
+#content { flex:1; padding:20px; overflow-y:auto; }
+img { max-width:100%; border-radius:10px; }
+audio { width:100%; }
 </style>
 </head>
-
 <body>
 
 <div id="layout">
-
   <div id="sidebar">
     <input id="search" placeholder="Search..." oninput="renderTree()" />
     <div id="tree"></div>
   </div>
-
   <div id="content">
     <h2 id="title">Wiki</h2>
     <div id="page">Select a page</div>
   </div>
-
 </div>
 
 <script>
 const BASE_URL = "https://coolpython53.github.io/GENSHIN-WIKI/";
 const FALLBACK_ICON = BASE_URL + "blueprint.jpg";
+const ICON_EXTENSIONS = ["jpg","png","jpeg"];
 
 let pages = [];
 
-// Load manifest.json
+// fetch manifest.json with cache busting
 async function loadPages() {
   try {
     const res = await fetch(BASE_URL + "manifest.json?t=" + new Date().getTime());
@@ -114,18 +52,15 @@ async function loadPages() {
   renderTree();
 }
 
-// Build a tree from manifest
+// Build tree structure
 function buildTree(paths) {
   const root = {};
   paths.forEach(path => {
     const parts = path.split("/");
     let current = root;
-    parts.forEach((part, i) => {
-      if (!current[part]) {
-        current[part] = {
-          __children: {},
-          __path: parts.slice(0, i + 1).join("/")
-        };
+    parts.forEach((part,i) => {
+      if(!current[part]) {
+        current[part] = {__children:{}, __path: parts.slice(0,i+1).join("/")};
       }
       current = current[part].__children;
     });
@@ -137,51 +72,50 @@ function buildTree(paths) {
 function renderTree() {
   const q = search.value.toLowerCase();
   tree.innerHTML = "";
-
   const filtered = pages.filter(p => p.toLowerCase().includes(q));
   const treeData = buildTree(filtered);
-
   renderNode(treeData, tree);
 }
 
+// Helper to get first valid blueprint URL
+async function getBlueprintUrl(fullPath) {
+  for(const ext of ICON_EXTENSIONS) {
+    const url = `${BASE_URL}pages/${fullPath}/blueprint.${ext}`;
+    try {
+      const res = await fetch(url, {method:'HEAD'});
+      if(res.ok) return url;
+    } catch {}
+  }
+  return FALLBACK_ICON;
+}
+
 // Render nodes recursively
-function renderNode(node, container, depth = 0) {
-  Object.keys(node).forEach(key => {
+function renderNode(node, container, depth=0) {
+  Object.keys(node).forEach(async key => {
     const item = node[key];
     const hasChildren = Object.keys(item.__children).length > 0;
     const fullPath = item.__path;
 
     const div = document.createElement("div");
     div.className = "item indent";
-    div.style.marginLeft = depth * 16 + "px";
+    div.style.marginLeft = depth*16 + "px";
 
-    // Try multiple blueprint extensions
-    const iconExtensions = ["jpg", "png", "jpeg"];
-    let iconUrl = FALLBACK_ICON;
-    for (const ext of iconExtensions) {
-      iconUrl = `${BASE_URL}pages/${fullPath}/blueprint.${ext}`;
-      break; // fallback on error anyway
-    }
-
+    const iconUrl = await getBlueprintUrl(fullPath);
     div.innerHTML = `<img class="icon" src="${iconUrl}" onerror="this.src='${FALLBACK_ICON}'">
                      <span class="${hasChildren ? 'folder' : ''}">${key}</span>`;
 
-    if (hasChildren) {
-      let open = false;
+    if(hasChildren) {
+      let open=false;
       div.onclick = () => {
         open = !open;
-        // Remove children first (iterate backwards to avoid removeChild error)
         const siblings = Array.from(container.children);
-        const start = siblings.indexOf(div) + 1;
-        for (let i = siblings.length - 1; i >= start; i--) {
-          if (parseInt(siblings[i].style.marginLeft) > depth * 16) {
-            container.removeChild(siblings[i]);
-          }
+        const start = siblings.indexOf(div)+1;
+        for(let i=siblings.length-1;i>=start;i--){
+          if(parseInt(siblings[i].style.marginLeft) > depth*16) container.removeChild(siblings[i]);
         }
-        if (open) renderNode(item.__children, container, depth + 1);
+        if(open) renderNode(item.__children, container, depth+1);
+        loadPage(fullPath); // auto-load page.md if exists
       };
-      // Double click opens page.md if it exists
-      div.ondblclick = () => loadPage(fullPath);
     } else {
       div.onclick = () => loadPage(fullPath);
     }
@@ -190,17 +124,15 @@ function renderNode(node, container, depth = 0) {
   });
 }
 
-// Load page content
-async function loadPage(fullPath) {
+// Load page.md
+async function loadPage(fullPath){
   const name = fullPath.split("/").pop();
   title.innerText = name;
   page.innerHTML = "Loading...";
-
   const url = `${BASE_URL}pages/${fullPath}/page.md`;
-
   try {
     const res = await fetch(url);
-    if (res.ok) {
+    if(res.ok){
       let text = await res.text();
       text = convertAssets(fullPath, text);
       page.innerHTML = marked.parse(text);
@@ -212,39 +144,32 @@ async function loadPage(fullPath) {
   }
 }
 
-// Clean strings
-function clean(str) {
-  return str.replace(/\r/g, "").replace(/\n/g, "").trim();
-}
-
-// Resolve paths for images/audio inside pages only
-function resolvePath(basePath, file) {
-  if (file.startsWith("http")) return file;
-  if (file.startsWith("/")) return "";
+// Convert assets
+function clean(str){return str.replace(/\r/g,"").replace(/\n/g,"").trim();}
+function resolvePath(basePath, file){
+  if(file.startsWith("http")) return file;
+  if(file.startsWith("/")) return "";
   const stack = basePath.split("/");
-  file.split("/").forEach(part => {
-    if (part === "..") stack.pop();
-    else if (part !== ".") stack.push(part);
+  file.split("/").forEach(part=>{
+    if(part==="..") stack.pop();
+    else if(part!=="." ) stack.push(part);
   });
   return `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${stack.join("/")}`;
 }
-
-// Convert markdown asset links
-function convertAssets(fullPath, text) {
-  text = text.replace(/image::(.*)/g, (m, src) => {
+function convertAssets(fullPath,text){
+  text=text.replace(/image::(.*)/g,(m,src)=>{
     const url = resolvePath(fullPath, clean(src));
-    return url ? `![](${url})` : "";
+    return url?`![](${url})`:"";
   });
-  text = text.replace(/mp3::(.*)/g, (m, src) => {
+  text=text.replace(/mp3::(.*)/g,(m,src)=>{
     const url = resolvePath(fullPath, clean(src));
-    return url ? `<audio controls><source src="${url}" type="audio/mpeg"></audio>` : "";
+    return url?`<audio controls><source src="${url}" type="audio/mpeg"></audio>`:"";
   });
   return text;
 }
 
 // Start
 loadPages();
-
 </script>
 
 </body>
