@@ -33,6 +33,7 @@ li:hover { text-decoration:underline; }
     <input id="search" placeholder="Search..." oninput="renderTree()" />
     <div id="tree"></div>
   </div>
+
   <div id="content">
     <h2 id="title">Wiki</h2>
     <div id="page">Select a page</div>
@@ -46,15 +47,19 @@ const ICON_EXTENSIONS = ["jpg","png","jpeg"];
 
 let pages = [];
 
+/* ---------------- LOAD PAGES ---------------- */
+
 async function loadPages() {
   try {
-    const res = await fetch(BASE_URL + "manifest.json?t=" + new Date().getTime());
+    const res = await fetch(BASE_URL + "manifest.json?t=" + Date.now());
     pages = await res.json();
   } catch {
     pages = [];
   }
   renderTree();
 }
+
+/* ---------------- TREE ---------------- */
 
 function buildTree(paths) {
   const root = {};
@@ -73,8 +78,7 @@ function renderTree() {
   const q = search.value.toLowerCase();
   tree.innerHTML = "";
   const filtered = pages.filter(p => p.toLowerCase().includes(q));
-  const treeData = buildTree(filtered);
-  renderNode(treeData, tree);
+  renderNode(buildTree(filtered), tree);
 }
 
 async function getBlueprintUrl(fullPath) {
@@ -83,7 +87,7 @@ async function getBlueprintUrl(fullPath) {
     try {
       const res = await fetch(url, {method:'HEAD'});
       if(res.ok) return url;
-    } catch{}
+    } catch {}
   }
   return FALLBACK_ICON;
 }
@@ -96,11 +100,14 @@ function renderNode(node, container, depth=0){
 
     const div = document.createElement("div");
     div.className = "item indent";
-    div.style.marginLeft = depth*16 + "px";
+    div.style.marginLeft = depth * 16 + "px";
 
     const iconUrl = await getBlueprintUrl(fullPath);
-    div.innerHTML = `<img class="icon" src="${iconUrl}" onerror="this.src='${FALLBACK_ICON}'">
-                     <span class="${hasChildren?'folder':''}">${key.replace(/_/g,' ')}</span>`;
+
+    div.innerHTML = `
+      <img class="icon" src="${iconUrl}" onerror="this.src='${FALLBACK_ICON}'">
+      <span class="${hasChildren?'folder':''}">${key.replace(/_/g,' ')}</span>
+    `;
 
     div.onclick = () => hasChildren ? loadFolder(fullPath) : loadPage(fullPath);
 
@@ -108,46 +115,58 @@ function renderNode(node, container, depth=0){
   });
 }
 
+/* ---------------- PAGE LOADING ---------------- */
+
 async function loadPage(fullPath){
   const name = fullPath.split("/").pop();
   title.innerText = name.replace(/_/g,' ');
   page.innerHTML = "Loading...";
+
   const url = `${BASE_URL}pages/${fullPath}/page.md`;
 
   try {
     const res = await fetch(url);
-    if(res.ok){
-      let text = await res.text();
-      text = convertAssets(fullPath,text);
-      text = convertPageLinks(text);
-      page.innerHTML = marked.parse(text);
-    } else {
-      page.innerHTML = "📁 Folder"; 
-    }
+    if(!res.ok) return page.innerHTML = "📁 Folder";
+
+    let text = await res.text();
+
+    text = convertAssets(fullPath, text);
+    text = convertPageLinks(text);
+
+    page.innerHTML = marked.parse(text);
+
+    // 🔥 IMPORTANT: re-inject images AFTER markdown render
+    restoreImages();
+
   } catch {
-    page.innerHTML = "📁 Folder"; 
+    page.innerHTML = "📁 Folder";
   }
 }
+
+/* ---------------- FOLDER ---------------- */
 
 async function loadFolder(fullPath){
   title.innerText = fullPath.split("/").pop().replace(/_/g,' ');
   page.innerHTML = "";
 
   const folderMdUrl = `${BASE_URL}pages/${fullPath}/folder.md`;
+
   try{
     const res = await fetch(folderMdUrl);
     if(res.ok){
       let text = await res.text();
       text = convertAssets(fullPath,text);
       text = convertPageLinks(text);
+
       const div = document.createElement("div");
       div.innerHTML = marked.parse(text);
       page.appendChild(div);
     }
-  } catch{}
+  } catch {}
 
-  const children = pages.filter(p=>p.startsWith(fullPath) && p !== fullPath);
-  if(children.length===0){
+  const children = pages.filter(p => p.startsWith(fullPath) && p !== fullPath);
+
+  if(children.length === 0){
     page.innerHTML += "<br>📁 Empty Folder";
     return;
   }
@@ -159,10 +178,85 @@ async function loadFolder(fullPath){
     li.onclick = ()=>loadPage(c);
     ul.appendChild(li);
   });
+
   page.appendChild(ul);
 }
 
-function clean(str){return str.replace(/\r/g,"").replace(/\n/g,"").trim();}
+/* ---------------- IMAGE ENGINE (FIXED) ---------------- */
+
+let imageStore = [];
+
+function convertAssets(fullPath, text){
+
+  imageStore = [];
+
+  text = text.replace(/image::([^\n]+)/g, (m, raw) => {
+
+    const token = raw.trim();
+
+    let url = token;
+    let html = "";
+
+    // ---- percent ----
+    const pct = token.match(/::::(\d+)%?$/);
+    if (pct) {
+      url = token.replace(/::::\d+%?$/, "");
+      const finalUrl = resolvePath(fullPath, clean(url));
+      html = `<img src="${finalUrl}" style="width:${pct[1]}%;height:auto;">`;
+      imageStore.push(html);
+      return `@@IMG${imageStore.length-1}@@`;
+    }
+
+    // ---- pixel ----
+    const px = token.match(/:::([\d]+)(?:,([\d]+))?$/);
+    if (px) {
+      url = token.replace(/:::[\d]+(,[\d]+)?$/, "");
+      const finalUrl = resolvePath(fullPath, clean(url));
+
+      let style = "";
+      if(px[1]) style += `width:${px[1]}px;`;
+      if(px[2]) style += `height:${px[2]}px;`;
+
+      html = `<img src="${finalUrl}" style="${style}">`;
+      imageStore.push(html);
+      return `@@IMG${imageStore.length-1}@@`;
+    }
+
+    const finalUrl = resolvePath(fullPath, clean(url));
+    html = `<img src="${finalUrl}">`;
+    imageStore.push(html);
+    return `@@IMG${imageStore.length-1}@@`;
+  });
+
+  text = text.replace(/mp3::(.*)/g,(m,src)=>{
+    const url = resolvePath(fullPath,clean(src));
+    return url ? `<audio controls><source src="${url}" type="audio/mpeg"></audio>` : "";
+  });
+
+  return text;
+}
+
+/* ---------------- RESTORE IMAGES ---------------- */
+
+function restoreImages(){
+  const el = document.getElementById("page");
+  imageStore.forEach((img, i) => {
+    el.innerHTML = el.innerHTML.replaceAll(`@@IMG${i}@@`, img);
+  });
+}
+
+/* ---------------- LINKS ---------------- */
+
+function convertPageLinks(text){
+  return text.replace(/\{\[([^\]]+)\]page::([^\}]+)\}/g,(m,t,p)=>{
+    const cleanPath = p.replace(/\/page\.md$/,'');
+    return `<a onclick="loadPage('${cleanPath}')">${t.replace(/_/g,' ')}</a>`;
+  });
+}
+
+/* ---------------- UTIL ---------------- */
+
+function clean(str){ return str.replace(/\r/g,"").trim(); }
 
 function resolvePath(basePath,file){
   if(file.startsWith("http")) return file;
@@ -177,64 +271,7 @@ function resolvePath(basePath,file){
   return `https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/${stack.join("/")}`;
 }
 
-function convertAssets(fullPath, text){
-
-  // image::FULL_URL:::500,300
-  // image::FULL_URL::::50
-  // image::FULL_URL
-
-  text = text.replace(/image::(.+)/g, (m, rawLine) => {
-
-    let raw = rawLine.trim();
-
-    let url = raw;
-    let style = "";
-
-    // ---- percent version ----
-    const percentIndex = raw.indexOf("::::");
-    if (percentIndex !== -1) {
-      url = raw.slice(0, percentIndex).trim();
-      const percent = raw.slice(percentIndex + 4).trim();
-
-      url = resolvePath(fullPath, clean(url));
-      return `<img src="${url}" style="width:${percent}%;height:auto;">`;
-    }
-
-    // ---- pixel version ----
-    const sizeIndex = raw.indexOf(":::");
-    if (sizeIndex !== -1) {
-      url = raw.slice(0, sizeIndex).trim();
-      const size = raw.slice(sizeIndex + 3).trim();
-
-      const [w, h] = size.split(",");
-
-      url = resolvePath(fullPath, clean(url));
-
-      if (w) style += `width:${w}px;`;
-      if (h) style += `height:${h}px;`;
-
-      return `<img src="${url}" style="${style}">`;
-    }
-
-    // ---- normal image ----
-    url = resolvePath(fullPath, clean(url));
-    return `<img src="${url}">`;
-  });
-
-  text = text.replace(/mp3::(.*)/g,(m,src)=>{
-    const url = resolvePath(fullPath,clean(src));
-    return url ? `<audio controls><source src="${url}" type="audio/mpeg"></audio>` : "";
-  });
-
-  return text;
-}
-
-function convertPageLinks(text){
-  return text.replace(/\{\[([^\]]+)\]page::([^\}]+)\}/g,(match,linkText,path)=>{
-    const cleanPath = path.replace(/\/page\.md$/,'');
-    return `<a onclick="loadPage('${cleanPath}')">${linkText.replace(/_/g,' ')}</a>`;
-  });
-}
+/* ---------------- START ---------------- */
 
 loadPages();
 </script>
