@@ -4,8 +4,15 @@ image::image.jpg::::50
 
 About the character
 
-### Ascension Materials
-list materials here...
+### Ascension
+#### Ascension phase #
+- Max level
+- Base HP
+- Base Attack
+- Base Defense
+
+#### Ascension phase # -> #
+- list materials here...
 
 LIST FULL COST HERE
 
