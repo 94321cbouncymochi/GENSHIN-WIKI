@@ -1,5 +1,5 @@
 # Albedo
-image::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Albedo.webp::::10
+image::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Albedo.webp::::25
 
 Albedo is a playable Geo character in Genshin Impact.
 
