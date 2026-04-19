@@ -39,10 +39,32 @@ A synthetic human made by the alchemist Rhinedottir, the mysterious Albedo is th
 - Base Attack: 129.87
 - Base Defense: 453.07
 - Geo Damage Bonus: 7.2%
+
 #### Ascension phase 2 -> 3
 - 60,000 Mora
 - 4 Basalt Pillar
 - 6 Prithiva Topaz Fragment
+- 20 Cecilia
+- 12 Sealed Scroll
+
+#### Ascension phase 3
+- Max level: 60
+- Base HP: 8,579.44
+- Base Attack: 162.91
+- Base Defense: 568.36
+- Geo Damage Bonus: 14.4%
+
+#### Ascension phase 3 -> 4
+- 80,000 Mora
+- 8 Basalt Pillar
+- 3 Prithvia Topaz Chunk
+- 30 Cecilia
+- 18 Sealed Scroll
+
+#### Ascension phase 4
+- Max level: 70
+- Base HP: 10,118.89
+- 
 
 LIST FULL COST HERE
 
