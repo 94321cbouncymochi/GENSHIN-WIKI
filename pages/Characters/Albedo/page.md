@@ -285,7 +285,7 @@ One day, he will understand all there is to know about this world — and Vision
 #### Namecard
 image::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Albedo-Namecard.webp::::25
 
-Reward for reaching Friendship Level 10 with Albedo### Quests and Events.
+Reward for reaching Friendship Level 10 with Albedo Quests and Events.
 Description: Allow me to bear witness to this miracle.
 
 #### Constellation
@@ -295,8 +295,110 @@ Name: Princeps Cretaceus
 Meaning: Chalk Prince
 
 ### Quests and events
-list quests and events here
+#### Archon Quests
 
+- Song of the Welkin Moon
+  - Act IV: An Elegy for Faded Moonlight
+    - All Is Foretold
+    - Echoes of Fate
+  - Act V: A Nocturne of the Far North
+    - In the Shifting Light of the Moon
+    - Ripples That Will Never Reach
+  - Act VI: Melting Moonlight in the Morning Mist
+    - The Night the Moon Returns Home
+    - Return to the Moon
+  - Act VII: A Traveler on a Winter's Night
+    - Where Our Space and Time Intersect
+    - Tracing the Footsteps of the Past
+  - Act VIII: True Moon
+    - The First Sliver of Moonlight
+    - Descending Moon
+    - Welkin Moon's Homecoming
+- Interlude Chapter
+  - Act IV: Paralogism
+    - Crimes One and Two
+    - The Hunger of Many
+    - The Gardener
+
+#### Story Quests
+
+- Draco Rubedo Chapter (Durin)
+  - Act I: The Magic Known as Storytelling
+    - The Solution of Fate
+ - Lupus Majoris Chapter (Varka)
+  - Act I: To Those Who Embark on the Expedition
+    - Fated Warrior
+- Princeps Cretaceus Chapter (Albedo)
+  - Act I: Traveler Observation Report
+    - The Genius Researcher and the Seed of Another World
+    - The First Experiment: Elements
+    - The Second Experiment: The World
+    - The Third Experiment: Life
+    - The Final Experiment: Withering Glory
+    
+#### Hangout Events
+
+- Kaeya
+  - Act I: Shenanigans and Sweet Wine
+    - An Ordinary Day for the Knights of Favonius
+
+#### World Quests
+
+- Witch's Homework
+  - Of Questions Beyond Questions
+    - Old Friends and New Knowledge
+
+#### Anecdotes
+
+- Anecdote Chronicles: Durin
+  - Durin: Time to Learn
+
+#### Events
+
+- The Chalk Prince and the Dragon
+  - Act I: Festering Desire
+  - Act II: Archon's Rival
+  - Act III: Raiders Amidst Snow Mist
+  - Act IV: Uninvited Guests
+  - Act V: Afterword (The Chalk Prince and the Dragon)
+- Invitation of Windblume
+  - Part III: Realm of Fog and Wind
+  - Part IV: Dream of Wind and Flowers
+- Midsummer Island Adventure
+  - Part III: Dodo-King of the Sea: Lying in Wait
+  - Part IV: The Final Riddle: A Secret Uncovered
+- Shadows Amidst Snowstorms
+  - Act I: The Snowy Past
+  - Act II: The Shadows Deepen
+  - Act III: A Secret Born From Ashes
+- Hues of the Violet Garden
+  - Festival Deeds
+    - Part I: A Story for You
+  - True Tales of the Violet Garden
+    - Act I: The Strange Tale of Suikou's Tipsy Tincture
+      - The Strange Tale of Suikou's Tipsy Tincture
+    - Act II: What the Blue Flowers Left Behind
+      - What the Blue Flowers Left Behind
+    - Act III: A New Painting in Pale Scarlet
+      - A New Painting in Pale Scarlet
+    - Act IV: The Palace, Dyed in Black
+      - The Palace, Dyed in Black
+      - The Five Colors' True Form
+- Of Ballads and Brews
+  - Favonian Goodies and Buddies
+- Windblume's Breath
+  - Windblume Festival
+    - Part I: A Gathering of Outlanders
+    - Part II: A Riddle Amidst the Crowds
+    - Part III: Joy Above the Clouds
+- Feline Fortress Furrdyssey
+  - Sir Pouncelot Joins the Lot!
+- Summertide Scales and Tales
+  - Appendix: Afterword (Summertide Scales and Tales)
+- Homeward, He Who Caught the Wind
+  - Part II: For a Reunion Without Tears
+  - Part III: Variations on the Song of the Dragon and Freedom
+- Homeward, He Who Caught the Wind/A Chat Over Fine Drinks
 ### Personality and Appearance
 list stuff here
 
