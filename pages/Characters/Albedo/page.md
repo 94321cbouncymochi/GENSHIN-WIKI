@@ -282,9 +282,19 @@ What truly sparks joy within him is turning the unknown into the known.
 One day, he will understand all there is to know about this world — and Visions are no exception.
 
 ### Namecard and Constellation
-list namecard and constellation here
+#### Namecard
+image::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Albedo-Namecard.webp::::25
 
-### Quests and Events
+Reward for reaching Friendship Level 10 with Albedo### Quests and Events.
+Description: Allow me to bear witness to this miracle.
+
+#### Constellation
+image::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Princeps-Cretaceus.webp::::25
+
+Name: Princeps Cretaceus
+Meaning: Chalk Prince
+
+### Quests and events
 list quests and events here
 
 ### Personality and Appearance
