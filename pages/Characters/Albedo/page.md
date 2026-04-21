@@ -495,7 +495,7 @@ mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Char
 #### Chat: Investigation
 "The truth of this world"... *sigh* What could it be?
 
-mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/sChat%20Investigation.mp3
+mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/Chat%20Investigation.mp3
 
 ### Images
 put images here...
