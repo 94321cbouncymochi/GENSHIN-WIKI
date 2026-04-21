@@ -483,7 +483,12 @@ The Wanderer later gave his core to Sandrone so she could continue computing her
 
 #### Hello
 I am Albedo, Chief Alchemist of the Knights of Favonius. You carry the aura of the stars, interesting... I would like to study you, if you do not mind. I'm certain we will have many opportunities to be alone in the future.
+
 mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Hello.mp3
+
+#### Chat: Still Life
+What a view... How about a quick break so I can sketch this beautiful scenery?
+
 
 ### Images
 put images here...
