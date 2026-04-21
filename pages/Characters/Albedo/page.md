@@ -508,5 +508,8 @@ The soil is moist, ideal for collecting the roots of Boom Blossoms. No please, a
 mp3::https://github.com/coolpython53/GENSHIN-WIKI/blob/main/pages/Characters/Albedo/Voice-overs/When%20It%20Rains.mp3
 
 #### When It Snows
+Master...
+
+mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/When%20It%20Snows.mp3
 ### Images
 put images here...
