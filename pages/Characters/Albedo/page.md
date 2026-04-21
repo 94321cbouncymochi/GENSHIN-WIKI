@@ -500,6 +500,10 @@ mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Char
 #### Chat: Investigation
 Going out into the world and investigating, turning the "unknown" into the "known." ...Ahhh, I missed this feeling.
 
-mp3::
+mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/Chat%20Reminiscing.mp3
+
+#### When It Rains
+
+
 ### Images
 put images here...
