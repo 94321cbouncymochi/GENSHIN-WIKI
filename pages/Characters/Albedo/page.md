@@ -511,5 +511,8 @@ mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Char
 Master...
 
 mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/When%20It%20Snows.mp3
+
+#### When the Sun Is Out
+Ample light... active biological organisms... Yes, this is a good place to sketch.
 ### Images
 put images here...
