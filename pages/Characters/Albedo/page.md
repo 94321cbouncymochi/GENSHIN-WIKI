@@ -518,5 +518,10 @@ Ample light... active biological organisms... Yes, this is a good place to sketc
 mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/When%20the%20Sun%20is%20Out.mp3
 
 #### Good Morning
+Good morning. Are we going to search for ancient relics today?
+
+mp3::https://raw.githubusercontent.com/coolpython53/GENSHIN-WIKI/main/pages/Characters/Albedo/Voice-overs/Good%20Morning.mp3
+
+
 ### Images
 put images here...
