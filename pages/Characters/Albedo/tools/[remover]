@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Remove [number]</title>
+</head>
+<body>
+
+<textarea id="input" rows="10" cols="60" placeholder="Paste your text here..."></textarea>
+<br><br>
+
+<button onclick="cleanText()">Remove [number]</button>
+
+<h3>Output:</h3>
+<textarea id="output" rows="10" cols="60"></textarea>
+
+<script>
+function cleanText() {
+  let text = document.getElementById("input").value;
+  
+  // Remove patterns like [1], [23], [999]
+  let cleaned = text.replace(/\[\d+\]/g, "");
+  
+  document.getElementById("output").value = cleaned;
+}
+</script>
+
+</body>
+</html>
