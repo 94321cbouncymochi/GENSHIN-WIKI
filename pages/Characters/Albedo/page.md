@@ -455,8 +455,30 @@ Albedo later returned to Nod-Krai with Durin, discovering that numerous energy f
 The Wanderer later gave his core to Sandrone so she could continue computing her formula, and as such, Albedo, Durin and the Traveler watched over his body until the process was complete. He and Durin then defended Nasha Town from Dottore's minions. Columbina was successfully brought back and Dottore was defeated in the ensuing battle. He later attended the first League meeting with Durin and Varka, the former wishing to learn how to publicly speak. Durin questioned Varka's remark on knighting him on the spot and wondered if he was joking or not, prompting Albedo to tell him to figure it out for himself.
 
 ### Trivia
-list trivia here...
-
+- Albedo is a synthetic human created from alchemy by his master, Rhinedottir (also known as "Gold"). While he debates whether he considers her his "mother" in Character Story 5, by the events of Shadows Amidst Snowstorms, he openly calls her his mother to the Traveler. On Rhinedottir's part, the description for Concealed Talon implies that she considers him her greatest creation. Later in the cinematic sequence in the quest Joy Above the Clouds, she describes him as her child and muses that this makes her a mother.
+- Albedo is the illustrator for Xingqiu's novel, A Legend of Sword. He enjoys reading the novels himself and rejected the Yae Publishing House's offers to have him change series for greater royalties.
+- The fact that Albedo was an artificial human who came from Khaenri'ah was heavily suggested before it was directly confirmed in the Version 2.3 event Shadows Amidst Snowstorms:
+  - In his Character Stories, Albedo deduced the circumstances surrounding his creation through Rhinedottir's notes. Albedo's Constellation takes the shape of a fetus in a bottle, further hinting at the artificial nature of his creation.
+  - One of Albedo's Talents is named Homuncular Nature. In some branches of alchemy, the creation of homunculi is seen as an alchemist's end goal. During Shadows Amidst Snowstorms, Albedo is revealed to be the successful product of Rhinedottir's Primordial Human Project.
+  - Albedo practices the Art of Khemia, a form of alchemy that was developed and practiced Khaenri'ah, and also played a major role in causing Khaenri'ah's downfall during the cataclysm 500 years ago. The Art of Khemia was unheard of in Teyvat before his arrival, while Venti — the Archon Barbatos who was present for the cataclysm — states it has "unmistakable properties." It could thus be deduced that Rhinedottir was from Khaenri'ah and created Albedo there.
+  - The Khaenri'ah Chapter's featured character, Dainsleif, has the following line from a "self-proclaimed prophet" in his Official Introduction: "Chalk pursues gold, in this time inopportune, the eclipse is swallowed by the crimson moon." "Chalk pursues gold" is a reference to the four stages in creating the Opus Magnum, and may also be an allusion to Albedo's pursuit of Rhinedottir.
+    - Albedo's name is derived from the second step in creating the Opus Magnum and he is known as the Kreideprinz (Chalk Prince). Rhinedottir is better known by her infamous alias "Gold," the alchemist from Khaenri'ah attributed with creating the monsters that wreaked havoc on Teyvat during the cataclysm.
+    - Rhinedottir's final assignment for Albedo, to discover the "truth and meaning of this world," is similar to the Traveler's Sibling's remark to the Traveler that they will discover the "true nature of this world" after they finish their journey. Albedo seeks to reunite with Rhinedottir by completing his assignment, much like how the Traveler hopes to reunite with their sibling at the end of their journey.
+  - Albedo has a four-pointed star on his neck. Having a four-pointed star as a birthmark is currently a trait only shared by other people from Khaenri'ah: Kaeya and Dainsleif's pupils take that shape. It was later revealed that Albedo's star is a "birthmark" left where Rhinedottir infused him with his life force.
+- Albedo is one of the few currently playable characters who acknowledges (or even seems aware) that the Traveler is from another world. He deduced this based on the Traveler's ability to control multiple elements without a Vision.
+- In Version 1.2, players noticed that Albedo didn't breathe like all the other characters did in Dragonspine. This turned out to be an error and was fixed in Version 1.3.
+- The Version 1.4 event Invitation of Windblume reveals that Albedo plays the lyre by ear and is apparently very good at it despite a lack of formal education in playing instruments.
+Albedo refers to Alice as "Aunt Alice," and considers her daughter Klee to be his younger sister. Additionally, he refers to Barbeloth as "Aunt Barbie."
+Throughout the course of the game, multiple characters have been made aware of Albedo's nature as a synthetic human:
+Albedo told the Traveler and Paimon in Shadows Amidst Snowstorms regardless of whether the player completed the quest or not.
+Albedo told Sucrose a few days before the events of Paralogism.
+Venti knew from the moment Rhinedottir and Alice brought Albedo to Mondstadt. Respectively, he is aware of Venti's status as Barbatos.
+Dahlia and likely Varka and Jean were made aware of his origins sometime before the events of Paralogism.
+Most, if not all members of the Hexenzirkel are aware of Albedo's status as a synthetic human.
+In his original character introduction illustration, Albedo is seen armed with a Sacrificial Sword. In-game, as of Shadows Amidst Snowstorms, he is seen wielding his signature Cinnabar Spindle in all cutscenes.
+As a Trial Character:
+Albedo is one of three playable characters who wields a Flagship Event weapon in at least one of his Character Trial iterations (Festering Desire prior to Version 2.3, Cinnabar Spindle from 2.3 onwards), with the other characters with this distinction being Xianyun and Chiori.
+Excluding Aloy (who is a crossover character lacking Character Trials) and the Traveler, he is also one of the only two 5-star characters who has never wielded a 5-star weapon in any of his Character Trial iterations to date. The other 5-star character with this distinction is Qiqi.
 ### Voice overs
 list voice overs and mp3s here...
 
